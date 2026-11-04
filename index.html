@@ -228,6 +228,7 @@
 <script>window.react = window.React;</script>
 <script src="https://cdn.jsdelivr.net/npm/lucide-react@0.545.0/dist/umd/lucide-react.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 
 <div id="root"></div>
 
@@ -1758,6 +1759,8 @@ function Play({ data, setData, onComplete }) {
     else setStep(step + 1);
   };
   const back = () => { setError(null); if (step > 0) setStep(step - 1); };
+  // each question starts at the top, so its title is the first thing on screen
+  useEffect(() => { window.scrollTo(0, 0); }, [step]);
   const q = questions[step];
 
   return html`
@@ -1862,7 +1865,10 @@ function Result({ data, onEdit }) {
   const [quiz, setQuiz] = useState({ state: 'idle' }); // idle | making | ready (link) | error (message)
   const makeQuiz = async () => {
     setQuiz({ state: 'making' });
-    try { setQuiz({ state: 'ready', link: await saveQuiz(data) }); }
+    try {
+      const link = await saveQuiz(data);
+      setQuiz({ state: 'ready', link, qr: await renderQrPng(link, entry.name, data.avatar) });
+    }
     catch (message) { setQuiz({ state: 'error', message: Array.isArray(message) ? message : ['The quiz could not be made.', 'クイズを作れませんでした。'] }); }
   };
   const copyQuizLink = async () => {
@@ -1913,9 +1919,9 @@ function Result({ data, onEdit }) {
         </div>
         <div className="text-center">
           ${quiz.state === 'ready' && html`<div className="mx-auto mt-4 max-w-md rounded-xl border border-mint-ink bg-mint-soft p-4 text-left">
-            <p className="text-sm font-bold text-ink"><${Bi} pair=${['Your quiz is ready. Send this link:', 'クイズができました。このリンクを送ってください：']} /></p>
-            <p className="mt-2 break-all rounded bg-white px-3 py-2 font-mono text-xs text-body">${quiz.link}</p>
-            <button type="button" className="btn mt-3 w-full" onClick=${copyQuizLink}><${Copy} size=${16} /> Copy link <span lang="ja" className="ml-1 text-sm font-normal">リンクをコピー</span></button>
+            <p className="text-sm font-bold text-ink"><${Bi} pair=${['Your quiz is ready. Save the QR code and send it:', 'クイズができました。QRコードを保存して送ってください：']} /></p>
+            <img src=${quiz.qr} alt="QR code for your quiz" className="mt-3 w-full rounded-lg" />
+            <button type="button" className="btn mt-3 w-full" onClick=${() => savePng(quiz.qr, `yourwiki-quiz-${entry.name}.png`).then((ok) => { if (!ok) setZoom(quiz.qr); })}><${Download} size=${16} /> Save QR code <span lang="ja" className="ml-1 text-sm font-normal">QRコードを保存</span></button>
           </div>`}
           ${quiz.state === 'error' && html`<p className="mx-auto mt-3 max-w-md text-sm leading-6 text-coral-ink" role="status"><${Bi} pair=${quiz.message} /></p>`}
         </div>
@@ -2003,10 +2009,48 @@ function buildQuiz(data) {
   return { name: e.name, nameJa: e.nameJa, avatar: data.avatar, questions, article: data, translations, createdAt: new Date().toISOString() };
 }
 
+// A square picture of the quiz link as a QR code, to save to the camera roll and send; a phone camera
+// or the Photos app opens the link straight from it.
+async function renderQrPng(link, quizName, avatar) {
+  const qr = qrcode(0, 'L');
+  qr.addData(link);
+  qr.make();
+  const n = qr.getModuleCount();
+  const S = 1080;
+  const color = Number.isInteger(avatar) ? AV_COLORS[3] : pick(AV_COLORS, (avatar || {}).color);
+  const deep = mixHex(color.fill, '#2f2e3c', 0.42), pale = mixHex(color.fill, '#ffffff', 0.82);
+  const round = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans CJK JP", sans-serif';
+  try { await document.fonts.load(`700 40px "Zen Maru Gothic"`, `${quizName}How well do you know?のこと、どれだけ知ってる？Scan to play読み取ってクイズに挑戦`); } catch { /* system faces */ }
+  const canvas = document.createElement('canvas'); canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = pale; ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(60, 60, S - 120, S - 120, 36); ctx.fill();
+  const portrait = new Image(); portrait.src = avatarUrl(avatar); await portrait.decode();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(110, 100, 150, 150, 18); ctx.clip(); ctx.drawImage(portrait, 110, 100, 150, 150); ctx.restore();
+  ctx.fillStyle = '#2f2e3c'; ctx.textAlign = 'left';
+  let size = 44; ctx.font = `700 ${size}px ${round}`;
+  const title = `How well do you know ${quizName}?`;
+  while (ctx.measureText(title).width > S - 400 && size > 26) { size -= 2; ctx.font = `700 ${size}px ${round}`; }
+  ctx.fillText(title, 290, 168);
+  ctx.fillStyle = '#6a6979'; ctx.font = `500 30px ${round}`; ctx.fillText(`${quizName}のこと、どれだけ知ってる？`, 290, 218);
+  // the code itself, with a white quiet zone around it
+  // whole-pixel cells keep the edges sharp, which cameras read more reliably
+  const cell = Math.max(2, Math.floor(600 / n)), box = cell * n, x0 = Math.round((S - box) / 2), y0 = 280 + Math.round((600 - box) / 2);
+  for (let r = 0; r < n; r += 1) for (let c = 0; c < n; c += 1) {
+    if (qr.isDark(r, c)) { ctx.fillStyle = '#16161d'; ctx.fillRect(x0 + c * cell, y0 + r * cell, cell, cell); }
+  }
+  ctx.fillStyle = deep; ctx.textAlign = 'center'; ctx.font = `700 36px ${round}`; ctx.fillText('Scan to play  読み取ってクイズに挑戦', S / 2, 280 + 600 + 72);
+  ctx.fillStyle = '#9896a4'; ctx.font = `700 28px "Shippori Mincho", serif`; ctx.fillText('yourwiki', S / 2, S - 78);
+  return canvas.toDataURL('image/png');
+}
+
 // Builds the quiz link for this page: its own address with the packed quiz after #quiz=.
 async function saveQuiz(data) {
   try {
-    return `${window.location.href.split('#')[0]}#quiz=${await packQuiz(buildQuiz(data))}`;
+    // only answers that were filled in, plus the translations of typed words; the quiz is rebuilt when opened
+    const answers = Object.fromEntries(Object.entries(data).filter(([, v]) => (Array.isArray(v) ? v.length : v !== '' && v != null)));
+    const translations = freeTextItems(data).filter((i) => TR_CACHE.has(i.text)).map((i) => [i.text, TR_CACHE.get(i.text).en, TR_CACHE.get(i.text).ja]);
+    return `${window.location.href.split('#')[0]}#quiz=${await packQuiz({ v: 2, a: answers, t: translations })}`;
   } catch {
     throw ['The quiz could not be made.', 'クイズを作れませんでした。'];
   }
@@ -2144,7 +2188,11 @@ function QuizPage({ quizId }) {
     const timer = window.setTimeout(() => { if (live) setQuiz(null); }, 10000);
     (async () => {
       try {
-        const body = await unpackQuiz(quizId);
+        let body = await unpackQuiz(quizId);
+        if (body && body.v === 2) {
+          (body.t || []).forEach(([text, en, ja]) => { if (text && en && ja && !TR_CACHE.has(text)) TR_CACHE.set(text, { en, ja }); });
+          body = buildQuiz({ ...defaultWiki, ...body.a });
+        }
         if (body && Array.isArray(body.translations)) body.translations.forEach(([text, en, ja]) => { if (text && en && ja && !TR_CACHE.has(text)) TR_CACHE.set(text, { en, ja }); });
         if (live) setQuiz(body && Array.isArray(body.questions) && body.questions.length ? body : null);
       } catch { if (live) setQuiz(null); }
