@@ -1,0 +1,2320 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>yourwiki</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Shippori+Mincho:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700&family=Caveat:wght@600;700&family=Cherry+Bomb+One&family=Amatic+SC:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&text=W&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.14/dist/index.global.js"></script>
+<style type="text/tailwindcss">
+  @theme inline {
+    --font-sans: var(--font-gothic);
+    --font-serif: var(--font-mincho);
+    --font-mono: var(--font-num);
+    --color-page: var(--page);
+    --color-ink: var(--ink);
+    --color-body: var(--body);
+    --color-sub: var(--sub);
+    --color-faint: var(--faint);
+    --color-rule: var(--rule);
+    --color-mint: var(--mint);
+    --color-mint-soft: var(--mint-soft);
+    --color-mint-ink: var(--mint-ink);
+    --color-coral: var(--coral);
+    --color-coral-ink: var(--coral-ink);
+  }
+  /* the "…" after "Writing your article" on the waiting screen */
+  .wait-dots::after { content: ''; animation: wait-dots 1.4s steps(4, end) infinite; }
+  @keyframes wait-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+  @media (prefers-reduced-motion: reduce) { .wait-dots::after { animation: none; content: '...'; } }
+</style>
+<style>
+  /* Layout: a plain record document. White ground, navy ink, hairline rules; the result is an encyclopedia entry.
+     English carries each line; a smaller Japanese line sits under it.
+     Accent roles: soft mint = actions and selection (buttons, chosen answers, picker band, infobox caption);
+     mint-ink = progress and accent text; coral = small markers and errors only. */
+  :root {
+    color-scheme: light;
+    --page: #ffffff;
+    --ink: #262741;        /* headings, primary text */
+    --body: #3a3a52;       /* running text */
+    --sub: #55546a;        /* secondary text, Japanese lines */
+    --faint: #666578;      /* lightest text allowed */
+    --rule: #d8e2de;       /* hairlines, tinted toward the mint */
+    --mint: #a8d6ca;       /* primary buttons, focus ring */
+    --mint-soft: #e9f4f0;  /* selected answers, picker band, infobox caption */
+    --mint-ink: #3d6b64;   /* progress, accent text, selected borders */
+    --coral: #c0614f;      /* error marker only */
+    --coral-ink: #9a3f22;  /* error text */
+    --font-gothic: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --font-mincho: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --font-num: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  }
+
+  html { background: var(--page); }
+  body {
+    min-width: 320px;
+    font-family: var(--font-gothic);
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--page);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input, textarea { font: inherit; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  ::selection { background: var(--mint); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  .wiki-shell { position: relative; min-height: 100dvh; overflow: hidden; background: var(--page); color: var(--ink); }
+
+  /* The About page alone is dark: the same colour names, with dark values. */
+  .theme-dark {
+    color-scheme: dark;
+    --page: #383840; --ink: #f4f2ec; --body: #e0dee5; --sub: #c2c0cb; --faint: #a9a7b4; --rule: #50505c;
+    --mint: #a8d6ca; --mint-soft: #3d4d4a; --mint-ink: #9ad6c6;
+  }
+  .theme-dark .sheet { background: #42424b; }
+  .theme-dark .btn { color: #2a2a31; }
+  .theme-dark .btn-quiet, .theme-dark .btn-outline { background: transparent; }
+  .theme-dark .logo-mark { color: #2a2a31; }
+
+  .label { font-size: .8125rem; font-weight: 700; letter-spacing: .04em; line-height: 1.4; color: var(--sub); }
+  .display { font-family: var(--font-mincho); font-weight: 600; letter-spacing: -.01em; text-wrap: balance; }
+  .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+  .ja { display: block; font-family: var(--font-gothic); font-size: .8125rem; font-weight: 400; line-height: 1.6; letter-spacing: 0; color: var(--sub); }
+  .ja-lg { font-size: .9375rem; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 3rem; padding: .7rem 1.4rem;
+    border: 1px solid var(--mint); border-radius: .375rem;
+    background: var(--mint); color: var(--ink);
+    font-size: 1rem; font-weight: 700; line-height: 1.3; cursor: pointer;
+    transition: background-color .18s ease, border-color .18s ease;
+  }
+  .btn:hover { background: #95cbbd; border-color: #95cbbd; }
+
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: .5rem;
+    background: var(--mint); color: var(--ink);
+    font-family: 'Dancing Script', 'Snell Roundhand', 'Apple Chancery', cursive; font-weight: 700; font-size: 1.6rem; line-height: 1;
+    padding-top: .1rem;
+    box-shadow: inset 0 0 0 1px rgba(61, 107, 100, .35);
+  }
+
+  .wheel { position: relative; height: 15rem; max-width: 15rem; border: 1px solid var(--rule); border-radius: .5rem; overflow: hidden; background: #ffffff; }
+  .wheel-band { position: absolute; left: 0; right: 0; top: 6rem; height: 3rem; background: var(--mint-soft); border-block: 1px solid var(--mint); pointer-events: none; }
+  .wheel-list {
+    position: relative; z-index: 1; height: 100%; overflow-y: auto;
+    scroll-snap-type: y mandatory; padding-block: 6rem;
+    overscroll-behavior: contain; scrollbar-width: none; outline: none;
+  }
+  .wheel-list::-webkit-scrollbar { display: none; }
+  .wheel-list:focus-visible { box-shadow: inset 0 0 0 2px var(--ink); }
+  .wheel-item {
+    height: 3rem; display: flex; align-items: center; justify-content: center;
+    scroll-snap-align: center; cursor: pointer;
+    font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 1.375rem; color: var(--faint);
+  }
+  .wheel-item.on { color: var(--ink); font-size: 1.75rem; font-weight: 500; }
+  .wheel-fade {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(#ffffff 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0) 62%, #ffffff 100%);
+  }
+  .btn:disabled { opacity: .6; cursor: default; }
+  .btn-outline {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 3rem; padding: .6rem 1.1rem;
+    border: 1px solid var(--ink); border-radius: .375rem;
+    background: #ffffff; color: var(--ink);
+    font-size: 1rem; font-weight: 700; line-height: 1.3; cursor: pointer;
+    transition: background-color .18s ease;
+  }
+  .btn-outline:hover { background: #f4f4f6; }
+  .btn-quiet {
+    display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+    min-height: 2.75rem; padding: .6rem 1rem;
+    border: 1px solid var(--rule); border-radius: .375rem;
+    background: #ffffff; color: var(--sub);
+    font-size: .9375rem; font-weight: 700; line-height: 1.3; cursor: pointer;
+    transition: color .18s ease, border-color .18s ease;
+  }
+  .btn-quiet:hover { border-color: var(--sub); color: var(--ink); }
+
+  .menu-toggle { display: inline-flex; width: 2.75rem; height: 2.75rem; padding: 0; }
+  @media (min-width: 768px) { .menu-toggle { display: none; } }
+
+  .sheet { background: #ffffff; border: 1px solid var(--rule); border-radius: .25rem; }
+
+  .input-paper {
+    width: 100%;
+    min-height: 3rem;
+    border: 1px solid #a3b3ad; border-radius: .375rem;
+    background: #ffffff; color: var(--ink);
+    padding: .75rem 1rem; outline: none;
+    font-size: 1.0625rem;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  .input-paper::placeholder { color: var(--faint); }
+  .input-paper:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(168, 214, 202, .8); }
+
+  .choice-chip {
+    display: inline-flex; align-items: center; gap: .4rem;
+    min-height: 2.75rem;
+    border: 1px solid #a3b3ad; border-radius: .375rem;
+    padding: .45rem .95rem; color: var(--body);
+    background: #ffffff;
+    text-align: left; line-height: 1.3; cursor: pointer;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+  }
+  .avatar-option {
+    width: 4.75rem; height: 4.75rem; padding: 3px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: .625rem; background: #ffffff;
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+  .avatar-option img { width: 100%; height: 100%; border-radius: .45rem; }
+  .avatar-option.tile { width: 100%; height: auto; }
+  .avatar-option.tile img { height: auto; aspect-ratio: 1; }
+  .avatar-option:hover { border-color: var(--mint-ink); }
+  .avatar-option.selected { border-color: var(--mint-ink); box-shadow: 0 0 0 2px var(--mint-ink); }
+
+  .choice-chip .en { display: block; font-size: 1rem; }
+  .choice-chip .ja { font-size: .75rem; margin-top: .1rem; }
+  .choice-chip:hover { border-color: var(--ink); }
+  .choice-chip.selected { border-color: var(--mint-ink); background: var(--mint-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--mint-ink); }
+  .choice-chip.selected svg { color: var(--mint-ink); }
+
+  .section-head {
+    font-family: var(--font-mincho); font-weight: 600; color: var(--ink);
+    font-size: 1.5rem; line-height: 1.35;
+    padding-bottom: .4rem; border-bottom: 1px solid var(--rule);
+  }
+  .section-head .ja { margin-top: .1rem; }
+  @media (min-width: 768px) { .section-head { font-size: 1.875rem; } }
+
+  .infobox { background: #ffffff; border: 1px solid #b7c7c1; border-radius: .25rem; }
+  .infobox th { text-align: left; vertical-align: top; font-weight: 700; color: var(--sub); white-space: nowrap; padding: .55rem .9rem .55rem 0; }
+  .infobox td { vertical-align: top; color: var(--ink); padding: .55rem 0; }
+  .infobox tr + tr th, .infobox tr + tr td { border-top: 1px solid var(--rule); }
+
+  .slider { appearance: none; -webkit-appearance: none; width: 100%; height: 2.75rem; background: transparent; cursor: pointer; }
+  .slider::-webkit-slider-runnable-track {
+    height: .4rem; border-radius: 999px;
+    background: linear-gradient(90deg, var(--mint-ink) var(--slider-progress), #d8e2de var(--slider-progress));
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; margin-top: -.85rem;
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    border: 3px solid var(--ink); background: #ffffff;
+  }
+  .slider::-moz-range-track { height: .4rem; border-radius: 999px; background: #d8e2de; }
+  .slider::-moz-range-progress { height: .4rem; border-radius: 999px; background: var(--mint-ink); }
+  .slider::-moz-range-thumb { width: 1.7rem; height: 1.7rem; border: 3px solid var(--ink); border-radius: 50%; background: #ffffff; }
+
+  .question-enter { animation: question-in .32s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes question-in { from { opacity: 0; transform: translate3d(14px, 0, 0); } to { opacity: 1; transform: none; } }
+  .rise-in { animation: rise-in .45s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise-in { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .question-enter, .rise-in { animation: none; }
+    .btn, .btn-outline, .btn-quiet, .choice-chip { transition: none; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script>window.react = window.React;</script>
+<script src="https://cdn.jsdelivr.net/npm/lucide-react@0.545.0/dist/umd/lucide-react.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+
+<div id="root"></div>
+
+<script>
+const { createContext, useContext, useEffect, useMemo, useRef, useState } = React;
+const html = htm.bind(React.createElement);
+const { ArrowLeft, ArrowRight, Check, ChevronDown, ChevronUp, Copy, Download, Menu, Pencil, Share2, X } = LucideReact;
+
+/* ---------- data ---------- */
+
+const defaultWiki = {
+  name: '', birthYear: '', lifespan: 80, titles: [], titleOther: '', birthplace: '',
+  avatar: { shape: 'round', color: 'yellow', face: 'smile', acc: 'none' },
+  matters: [], mattered: '', viewTopic: '', viewTopicOther: '', viewStance: '', viewReason: '', lastWords: '', legacyTo: '', legacyWhat: '', traits: [], traitOther: '', anecdote: '', endWho: '', endCondition: '', endPlace: '', endOther: '',
+};
+
+// Each option: [English, Japanese]. Answers store the English text.
+// Question 4 is a title or occupation: the word that follows a name in an encyclopedia ("… was a nurse"). One answer.
+const titleOptions = [
+  ['a nurse', '看護師'],
+  ['a teacher', '教師'],
+  ['a researcher', '研究者'],
+  ['an artist', 'アーティスト'],
+  ['an entrepreneur', '起業家'],
+];
+// Question 7 choices: [English, chip text, Japanese before 人物 (好奇心旺盛な), Japanese linking to the next one (好奇心旺盛で)].
+const traitOptions = [
+  ['curious', '好奇心旺盛', '好奇心旺盛な', '好奇心旺盛で'],
+  ['strong-minded', '芯が強い', '芯の強い', '芯が強く'],
+  ['quick to act', '行動力がある', '行動力のある', '行動力があり'],
+  ['funny', 'ユーモアがある', 'ユーモアのある', 'ユーモアがあり'],
+  ['kind', 'やさしい', 'やさしい', 'やさしく'],
+];
+// "好奇心旺盛で、ユーモアのある" — every trait but the last links on; the last one leads into 人物.
+function traitsJaPhrase(chosen, typedJa) {
+  const parts = chosen.map((en) => traitOptions.find(([e]) => e === en)).filter(Boolean);
+  // a typed word that ends in a noun (頑固) needs な before 人物 (頑固な人物)
+  const typed = typedJa && /[\u3400-\u9fff\u30a0-\u30ff]$/.test(typedJa) ? typedJa + 'な' : typedJa;
+  const all = [...parts.map((t, i) => (i < parts.length - 1 || typed ? t[3] : t[2])), ...(typed ? [typed] : [])];
+  return all.join('、');
+}
+const endWhoOptions = [
+  ['surrounded by family', '家族に囲まれて'],
+  ['alone and at peace', 'ひとり静かに'],
+  ['with hospital staff', '病院のスタッフに見守られて'],
+];
+const endConditionOptions = [
+  ['with a smile', '笑顔で'],
+  ['after a long illness', '長い闘病の後に'],
+  ['supported by those around them', '周りの人に支えられながら'],
+];
+const endPlaceOptions = [
+  ['at home', '自宅で'],
+  ['in a hospital bed', '病院のベッドで'],
+  ['somewhere on a journey', '旅の途中で'],
+];
+const nameOptions = [
+  ['Toyotomi Hideyoshi', '豊臣秀吉'],
+  ['Marie Curie', 'マリー・キュリー'],
+];
+
+// The example entry on the first page, built by the same code as a real result.
+const SAMPLE = {
+  name: 'Toyotomi Hideyoshi', birthYear: '1537', lifespan: 61,
+  avatar: { shape: 'bear', color: 'yellow', face: 'happy', acc: 'crown' },
+  titles: [], titleOther: 'a warlord who unified Japan', birthplace: 'Owari Province',
+  matters: [], mattered: 'making his own choices', traits: [], traitOther: '',
+  anecdote: 'On a cold morning, he warmed his lord Oda Nobunaga’s sandals inside his own clothes',
+  endWho: '', endCondition: 'after a long illness', endPlace: 'at Fushimi Castle', endOther: 'with his campaign in Korea still unfinished',
+  lastWords: 'Like dew I fell, like dew I vanish; even all I did in Naniwa is a dream within a dream',
+  legacyTo: 'his son Hideyori', legacyWhat: 'the realm',
+};
+const sampleTranslations = [
+  ['making his own choices', '自分のことは自分で決めること'],
+  ['a warlord who unified Japan', '天下統一を果たした武将'],
+  ['Owari Province', '尾張国'],
+  ['On a cold morning, he warmed his lord Oda Nobunaga’s sandals inside his own clothes', '寒い朝、主君・織田信長の草履を懐で温めておいた'],
+  ['with his campaign in Korea still unfinished', '朝鮮出兵への未練を残したまま'],
+  ['at Fushimi Castle', '伏見城で'],
+  ['Like dew I fell, like dew I vanish; even all I did in Naniwa is a dream within a dream', '露と落ち露と消えにし我が身かな 浪速のことも夢のまた夢'],
+  ['his son Hideyori', '息子の秀頼'],
+  ['the realm', '天下'],
+];
+// Question 6 choices: [chip text, Japanese, the words used in the article where the chip says "my"/"I"].
+const matteredOptions = [
+  ['dinner with my family', '家族との夕ごはん', 'dinner with their family'],
+  ['putting everything into tennis', 'テニスに打ち込むこと'],
+  ['eating what I love', '好きなものを食べること', 'eating what they loved'],
+  ['thinking about how others feel', '他人の気持ちを考えること', 'thinking about how others felt'],
+  ['my honest feelings', '自分の正直な気持ち', 'their honest feelings'],
+];
+// Question 8 (beliefs): one topic, for or against, and an optional reason. [chip, Japanese, words used in the article]
+const viewTopicOptions = [
+  ['organ donation', '臓器移植'],
+  ['euthanasia', '安楽死'],
+  ['life-prolonging treatment', '延命治療'],
+  ['junshi (following one\'s lord in death)', '殉死', 'junshi, the custom of following one\'s lord in death'],
+];
+const viewStanceOptions = [['for', '賛成'], ['against', '反対']];
+const articleEnOf = (en) => ([...matteredOptions, ...viewTopicOptions].find(([e]) => e === en) || [])[2] || en;
+// Birthplace choices. A place can be a name ("Nara") or a phrase that already says where ("at home" / 「家で」).
+const placeShortcuts = [['Nara', '奈良'], ['a big city', '都会'], ['in their own home', '自分の家で'], ['a village by the sea', '海辺の村']];
+
+const allOptions = [...nameOptions, ...sampleTranslations, ['Oda Nobunaga', '織田信長'], ...matteredOptions, ...titleOptions, ...traitOptions, ...endWhoOptions, ...endConditionOptions, ...endPlaceOptions, ...placeShortcuts, ...viewTopicOptions, ...viewStanceOptions];
+const jaOf = (en) => (allOptions.find(([e]) => e === en) || [en, en])[1];
+
+/* ---------- place names: show a typed birthplace in English and Japanese ---------- */
+// [English, Japanese, other romaji spellings…]. Typed input is matched loosely (case, spaces, hyphens, long vowels).
+const PLACES = [
+  // prefectures
+  ['Hokkaido', '北海道'], ['Aomori', '青森'], ['Iwate', '岩手'], ['Miyagi', '宮城'], ['Akita', '秋田'], ['Yamagata', '山形'], ['Fukushima', '福島'],
+  ['Ibaraki', '茨城'], ['Tochigi', '栃木'], ['Gunma', '群馬'], ['Saitama', '埼玉'], ['Chiba', '千葉'], ['Tokyo', '東京'], ['Kanagawa', '神奈川'],
+  ['Niigata', '新潟'], ['Toyama', '富山'], ['Ishikawa', '石川'], ['Fukui', '福井'], ['Yamanashi', '山梨'], ['Nagano', '長野'], ['Gifu', '岐阜'],
+  ['Shizuoka', '静岡'], ['Aichi', '愛知'], ['Mie', '三重'], ['Shiga', '滋賀'], ['Kyoto', '京都'], ['Osaka', '大阪'], ['Hyogo', '兵庫'], ['Nara', '奈良'],
+  ['Wakayama', '和歌山'], ['Tottori', '鳥取'], ['Shimane', '島根'], ['Okayama', '岡山'], ['Hiroshima', '広島'], ['Yamaguchi', '山口'],
+  ['Tokushima', '徳島'], ['Kagawa', '香川'], ['Ehime', '愛媛'], ['Kochi', '高知'], ['Fukuoka', '福岡'], ['Saga', '佐賀'], ['Nagasaki', '長崎'],
+  ['Kumamoto', '熊本'], ['Oita', '大分'], ['Miyazaki', '宮崎'], ['Kagoshima', '鹿児島'], ['Okinawa', '沖縄'],
+  // Japanese cities and areas
+  ['Sapporo', '札幌'], ['Hakodate', '函館'], ['Asahikawa', '旭川'], ['Otaru', '小樽'], ['Sendai', '仙台'], ['Morioka', '盛岡'], ['Hirosaki', '弘前'],
+  ['Koriyama', '郡山'], ['Iwaki', 'いわき'], ['Mito', '水戸'], ['Tsukuba', 'つくば'], ['Utsunomiya', '宇都宮'], ['Nikko', '日光'], ['Maebashi', '前橋'],
+  ['Takasaki', '高崎'], ['Omiya', '大宮'], ['Urawa', '浦和'], ['Kawagoe', '川越'], ['Funabashi', '船橋'], ['Kashiwa', '柏'], ['Hachioji', '八王子'],
+  ['Shibuya', '渋谷'], ['Shinjuku', '新宿'], ['Setagaya', '世田谷'], ['Ikebukuro', '池袋'], ['Asakusa', '浅草'], ['Kichijoji', '吉祥寺'], ['Nerima', '練馬'],
+  ['Yokohama', '横浜'], ['Kawasaki', '川崎'], ['Kamakura', '鎌倉'], ['Yokosuka', '横須賀'], ['Sagamihara', '相模原'], ['Hakone', '箱根'],
+  ['Nagaoka', '長岡'], ['Kanazawa', '金沢'], ['Matsumoto', '松本'], ['Karuizawa', '軽井沢'], ['Hamamatsu', '浜松'], ['Atami', '熱海'],
+  ['Nagoya', '名古屋'], ['Toyota', '豊田'], ['Okazaki', '岡崎'], ['Tsu', '津'], ['Otsu', '大津'], ['Kobe', '神戸'], ['Himeji', '姫路'], ['Sakai', '堺'],
+  ['Kurashiki', '倉敷'], ['Fukuyama', '福山'], ['Shimonoseki', '下関'], ['Matsuyama', '松山'], ['Takamatsu', '高松'], ['Kitakyushu', '北九州'],
+  ['Hakata', '博多'], ['Sasebo', '佐世保'], ['Beppu', '別府'], ['Naha', '那覇'], ['Ishigaki', '石垣'], ['Miyakojima', '宮古島'],
+  // countries and regions
+  ['Japan', '日本', 'nippon', 'nihon'], ['the United States', 'アメリカ', 'usa', 'us', 'america', 'unitedstates', 'unitedstatesofamerica'],
+  ['the United Kingdom', 'イギリス', 'uk', 'unitedkingdom', 'britain', 'greatbritain'], ['England', 'イングランド'], ['Scotland', 'スコットランド'],
+  ['China', '中国'], ['South Korea', '韓国', 'korea'], ['Taiwan', '台湾'], ['Hong Kong', '香港'], ['Singapore', 'シンガポール'], ['Thailand', 'タイ'],
+  ['Vietnam', 'ベトナム'], ['the Philippines', 'フィリピン', 'philippines'], ['Indonesia', 'インドネシア'], ['Malaysia', 'マレーシア'], ['India', 'インド'],
+  ['Australia', 'オーストラリア'], ['New Zealand', 'ニュージーランド'], ['Canada', 'カナダ'], ['Mexico', 'メキシコ'], ['Brazil', 'ブラジル'],
+  ['Argentina', 'アルゼンチン'], ['Peru', 'ペルー'], ['France', 'フランス'], ['Germany', 'ドイツ'], ['Italy', 'イタリア'], ['Spain', 'スペイン'],
+  ['Portugal', 'ポルトガル'], ['the Netherlands', 'オランダ', 'netherlands', 'holland'], ['Belgium', 'ベルギー'], ['Switzerland', 'スイス'],
+  ['Austria', 'オーストリア'], ['Sweden', 'スウェーデン'], ['Norway', 'ノルウェー'], ['Finland', 'フィンランド'], ['Denmark', 'デンマーク'],
+  ['Ireland', 'アイルランド'], ['Russia', 'ロシア'], ['Poland', 'ポーランド'], ['Greece', 'ギリシャ'], ['Turkey', 'トルコ'], ['Egypt', 'エジプト'],
+  ['Kenya', 'ケニア'], ['South Africa', '南アフリカ'], ['Hawaii', 'ハワイ'], ['California', 'カリフォルニア'],
+  // cities around the world
+  ['New York', 'ニューヨーク', 'nyc', 'newyorkcity'], ['Los Angeles', 'ロサンゼルス', 'la'], ['San Francisco', 'サンフランシスコ', 'sf'], ['San Diego', 'サンディエゴ'],
+  ['San Jose', 'サンノゼ'], ['Seattle', 'シアトル'], ['Portland', 'ポートランド'], ['Chicago', 'シカゴ'], ['Boston', 'ボストン'],
+  ['Washington, D.C.', 'ワシントンD.C.', 'washingtondc', 'dc'], ['Houston', 'ヒューストン'], ['Dallas', 'ダラス'], ['Austin', 'オースティン'],
+  ['Miami', 'マイアミ'], ['Atlanta', 'アトランタ'], ['Denver', 'デンバー'], ['Las Vegas', 'ラスベガス'], ['Philadelphia', 'フィラデルフィア'],
+  ['Honolulu', 'ホノルル'], ['Vancouver', 'バンクーバー'], ['Toronto', 'トロント'], ['Montreal', 'モントリオール'], ['London', 'ロンドン'],
+  ['Paris', 'パリ'], ['Berlin', 'ベルリン'], ['Munich', 'ミュンヘン'], ['Rome', 'ローマ'], ['Milan', 'ミラノ'], ['Florence', 'フィレンツェ'],
+  ['Venice', 'ヴェネツィア'], ['Madrid', 'マドリード'], ['Barcelona', 'バルセロナ'], ['Lisbon', 'リスボン'], ['Amsterdam', 'アムステルダム'],
+  ['Vienna', 'ウィーン'], ['Prague', 'プラハ'], ['Stockholm', 'ストックホルム'], ['Copenhagen', 'コペンハーゲン'], ['Helsinki', 'ヘルシンキ'],
+  ['Dublin', 'ダブリン'], ['Edinburgh', 'エディンバラ'], ['Moscow', 'モスクワ'], ['Istanbul', 'イスタンブール'], ['Cairo', 'カイロ'], ['Dubai', 'ドバイ'],
+  ['Seoul', 'ソウル'], ['Busan', '釜山', 'pusan'], ['Beijing', '北京', 'peking'], ['Shanghai', '上海'], ['Taipei', '台北'], ['Bangkok', 'バンコク'],
+  ['Hanoi', 'ハノイ'], ['Ho Chi Minh City', 'ホーチミン', 'hochiminh', 'saigon'], ['Manila', 'マニラ'], ['Jakarta', 'ジャカルタ'], ['Bali', 'バリ'],
+  ['Kuala Lumpur', 'クアラルンプール'], ['Delhi', 'デリー', 'newdelhi'], ['Mumbai', 'ムンバイ'], ['Sydney', 'シドニー'], ['Melbourne', 'メルボルン'],
+  ['Auckland', 'オークランド'], ['Mexico City', 'メキシコシティ'], ['São Paulo', 'サンパウロ'], ['Rio de Janeiro', 'リオデジャネイロ', 'rio'],
+  ['Buenos Aires', 'ブエノスアイレス'],
+];
+const placeKey = (t) => t.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '')
+  .replace(/ou/g, 'o').replace(/oo/g, 'o').replace(/uu/g, 'u');
+const PLACE_BY_KEY = new Map();
+PLACES.forEach((entry) => [entry[0], ...entry.slice(2)].forEach((name) => PLACE_BY_KEY.set(placeKey(name), entry)));
+const PLACE_BY_JA = new Map(PLACES.map((entry) => [entry[1], entry]));
+
+// Kana → Hepburn romaji, for Japanese place names that are not in the list.
+const KANA = { きゃ: 'kya', きゅ: 'kyu', きょ: 'kyo', しゃ: 'sha', しゅ: 'shu', しょ: 'sho', ちゃ: 'cha', ちゅ: 'chu', ちょ: 'cho', にゃ: 'nya', にゅ: 'nyu', にょ: 'nyo',
+  ひゃ: 'hya', ひゅ: 'hyu', ひょ: 'hyo', みゃ: 'mya', みゅ: 'myu', みょ: 'myo', りゃ: 'rya', りゅ: 'ryu', りょ: 'ryo', ぎゃ: 'gya', ぎゅ: 'gyu', ぎょ: 'gyo',
+  じゃ: 'ja', じゅ: 'ju', じょ: 'jo', びゃ: 'bya', びゅ: 'byu', びょ: 'byo', ぴゃ: 'pya', ぴゅ: 'pyu', ぴょ: 'pyo',
+  あ: 'a', い: 'i', う: 'u', え: 'e', お: 'o', か: 'ka', き: 'ki', く: 'ku', け: 'ke', こ: 'ko', さ: 'sa', し: 'shi', す: 'su', せ: 'se', そ: 'so',
+  た: 'ta', ち: 'chi', つ: 'tsu', て: 'te', と: 'to', な: 'na', に: 'ni', ぬ: 'nu', ね: 'ne', の: 'no', は: 'ha', ひ: 'hi', ふ: 'fu', へ: 'he', ほ: 'ho',
+  ま: 'ma', み: 'mi', む: 'mu', め: 'me', も: 'mo', や: 'ya', ゆ: 'yu', よ: 'yo', ら: 'ra', り: 'ri', る: 'ru', れ: 're', ろ: 'ro', わ: 'wa', を: 'o', ん: 'n',
+  が: 'ga', ぎ: 'gi', ぐ: 'gu', げ: 'ge', ご: 'go', ざ: 'za', じ: 'ji', ず: 'zu', ぜ: 'ze', ぞ: 'zo', だ: 'da', ぢ: 'ji', づ: 'zu', で: 'de', ど: 'do',
+  ば: 'ba', び: 'bi', ぶ: 'bu', べ: 'be', ぼ: 'bo', ぱ: 'pa', ぴ: 'pi', ぷ: 'pu', ぺ: 'pe', ぽ: 'po', ぁ: 'a', ぃ: 'i', ぅ: 'u', ぇ: 'e', ぉ: 'o' };
+function kanaToRomaji(text) {
+  const h = text.replace(/[\u30a1-\u30f6]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  let out = '';
+  for (let i = 0; i < h.length; i += 1) {
+    const two = h.slice(i, i + 2);
+    if (h[i] === 'っ') { const next = KANA[h.slice(i + 1, i + 3)] || KANA[h[i + 1]] || ''; out += next.startsWith('ch') ? 't' : next.charAt(0); continue; }
+    if (h[i] === 'ー') continue;
+    if (KANA[two]) { out += KANA[two]; i += 1; continue; }
+    out += KANA[h[i]] ?? h[i];
+  }
+  return out.replace(/ou/g, 'o').replace(/uu/g, 'u').replace(/n(?=[bmp])/g, 'm').replace(/(^|\s)([a-z])/g, (m, sp, c) => sp + c.toUpperCase());
+}
+
+const hasJapanese = (t) => /[\u3040-\u30ff\u3400-\u9fff]/.test(t);
+const isKanaOnly = (t) => /^[\u3040-\u30ff\s]+$/.test(t);
+// A single lowercase word ("aomori", "lyon") is capitalised; phrases ("a small port town") are left as typed.
+const titleCase = (t) => (/^[a-z][a-z'.-]*$/.test(t) ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+
+// One part of a birthplace ("Akita", "秋田県", "sandiego") → { en, ja }.
+function placePart(raw) {
+  const t = raw.trim();
+  if (!t) return { en: '', ja: '' };
+  if (hasJapanese(t)) {
+    const found = PLACE_BY_JA.get(t) || PLACE_BY_JA.get(t.replace(/[都道府県市区町村]$/, ''));
+    if (found) return { en: found[0], ja: t };
+    if (!isKanaOnly(t)) return { en: t, ja: t };
+    const romaji = kanaToRomaji(t);
+    const byReading = PLACE_BY_KEY.get(placeKey(romaji));
+    return { en: byReading && !/^[\u30a0-\u30ff]+$/.test(t) ? byReading[0] : romaji, ja: t };
+  }
+  const bare = t.replace(/[\s-]+(prefecture|city|ken|shi)$/i, '');
+  const found = PLACE_BY_KEY.get(placeKey(t)) || PLACE_BY_KEY.get(placeKey(bare));
+  if (found) return { en: found[0], ja: found[1] };
+  return { en: titleCase(t), ja: t };
+}
+
+// A whole birthplace: comma-separated parts are converted one by one ("akita, japan" → "Akita, Japan" / "秋田、日本").
+function placeNames(text) {
+  const parts = text.split(/[,、，]/).map(placePart).filter((p) => p.en || p.ja);
+  if (!parts.length) return { en: '', ja: '' };
+  return { en: parts.map((p) => p.en).join(', '), ja: parts.map((p) => p.ja).join('、') };
+}
+
+// A step can hold several questions (parts), shown one under the other on the same page.
+const questions = [
+  { kicker: ['Name', '名前'], title: ['What name goes on this article?', 'この記事の名前は？'], hint: ['Your name now, or one you have never used.', '今の名前でも、使ったことのない名前でも。'] },
+  { kicker: ['Profile', 'プロフィール'], title: ['What year were you born?', '何年生まれ？'], hint: ['This goes at the top of the article.', '記事の冒頭に載ります。'] },
+  { kicker: ['Lifespan', '寿命'], title: ['How long do you live?', '何歳まで生きる？'], hint: ['This is a setting you choose. Think about the time you picture, not only the number.', 'あなたが選ぶ設定です。数字だけでなく、思い描く時間を考えてください。'] },
+  { parts: [
+    { kicker: ['Birthplace', '出身地'], title: ['Where were you born?', 'どこで生まれた？'], hint: ['A place name, or what kind of place it was.', '地名か、どんな場所だったか。'] },
+    { kicker: ['Occupation', '肩書き'], title: ['What did you do in life?', '何をした人？'], hint: ['What you hope to become, or what you do now. It can be something that has not come true yet.', '将来なりたいものや、今していること。まだ叶っていないものでも。'] },
+  ] },
+  { kicker: ['What matters', '大切なこと'], title: ['Is there anything you hold on to in life?', '人生で大切にしていることはありますか？'], hint: ['Pick the ones that feel most like you. Choose as many as you like.', 'あなたらしいものを選んでください。いくつ選んでもかまいません。'] },
+  { kicker: ['A small story', '逸話'], title: ['Is there a small story about you?', 'ちょっとした逸話は？'], hint: ['Something a friend might tell about you.', '誰かがあなたについて話しそうなこと。'] },
+  { kicker: ['Beliefs', '思想'], title: ['Where do you stand on life and death?', '命と死について、あなたの考えは？'], hint: ['Share your view on just one topic.', 'あなたの思想を一つだけ共有しましょう。'] },
+  { kicker: ['The end', '最期'], title: ['How did your life end?', 'どんなふうに亡くなった？'], hint: ['Take a moment to think about how your life ends.', '人生の終わり方を自分で考えてみてください。'] },
+  { parts: [
+    { kicker: ['After death', '没後'], title: ['What were your last words?', '最期の言葉は？'], hint: ['Words you would want to leave at the very end. Optional.', '最後に残したい一言。任意です。'] },
+    { kicker: ['After death', '没後'], title: ['What did you leave to someone?', '誰かに何を遺した？'], hint: ['Something you leave to someone you care about. Optional.', '大切な人に遺したいもの。任意です。'] },
+  ] },
+];
+
+/* ---------- portrait: a small set of simple, original illustrations ---------- */
+
+const INK_DOT = '#2a2230';
+const eyes = (x1, x2, y) => [x1, x2].map((x) => `<circle cx="${x}" cy="${y}" r="2.8" fill="${INK_DOT}"/><circle cx="${x + 0.9}" cy="${y - 1}" r=".9" fill="#ffffff"/>`).join('');
+const blush = (x1, x2, y) => [x1, x2].map((x) => `<circle cx="${x}" cy="${y}" r="4.5" fill="#ff9a8a" opacity=".35"/>`).join('');
+const line = (d, w = 1.6) => `<path d="${d}" fill="none" stroke="${INK_DOT}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+const ILLUSTRATIONS = [
+  { label: ['Cat', 'ねこ'], art:
+    `<path d="M33 52 L37 22 L57 40 Z" fill="#f2b779"/><path d="M87 52 L83 22 L63 40 Z" fill="#f2b779"/>`
+    + `<path d="M38 44 L40 30 L50 39 Z" fill="#f7a8a0"/><path d="M82 44 L80 30 L70 39 Z" fill="#f7a8a0"/>`
+    + `<ellipse cx="60" cy="65" rx="32" ry="28" fill="#f2b779"/>`
+    + `<path d="M52 41 Q60 47 68 41" fill="none" stroke="#d99357" stroke-width="3" stroke-linecap="round"/>`
+    + eyes(48, 72, 63) + blush(42, 78, 71)
+    + `<path d="M57.5 68.5 H62.5 L60 71.5 Z" fill="#e87a7a"/>`
+    + line('M60 71.5 Q57.5 75.5 54.5 73.5 M60 71.5 Q62.5 75.5 65.5 73.5')
+    + `<path d="M27 66 L41 68 M27 73 L41 72 M93 66 L79 68 M93 73 L79 72" stroke="${INK_DOT}" stroke-width="1.3" stroke-linecap="round" opacity=".4"/>` },
+  { label: ['Dog', 'いぬ'], art:
+    `<ellipse cx="60" cy="64" rx="29" ry="28" fill="#e7bf93"/>`
+    + `<circle cx="72" cy="52" r="6" fill="#d9a576" opacity=".7"/>`
+    + `<ellipse cx="34" cy="58" rx="9" ry="19" transform="rotate(18 34 58)" fill="#9b6b48"/>`
+    + `<ellipse cx="86" cy="58" rx="9" ry="19" transform="rotate(-18 86 58)" fill="#9b6b48"/>`
+    + `<ellipse cx="60" cy="75" rx="14" ry="10" fill="#fbeedd"/>`
+    + `<ellipse cx="60" cy="70" rx="4.5" ry="3.3" fill="${INK_DOT}"/>`
+    + eyes(49, 71, 60) + blush(42, 78, 70)
+    + line('M60 73.5 V77 M55 77 Q60 81 65 77')
+    + `<path d="M57.5 79 Q60 85 62.5 79 Z" fill="#f08f8f"/>` },
+  { label: ['Rabbit', 'うさぎ'], art:
+    `<ellipse cx="47" cy="32" rx="8" ry="21" fill="#ffffff" stroke="#e6ddd3" stroke-width="1.5"/><ellipse cx="47" cy="34" rx="4" ry="14" fill="#f9b8b0"/>`
+    + `<ellipse cx="73" cy="32" rx="8" ry="21" fill="#ffffff" stroke="#e6ddd3" stroke-width="1.5"/><ellipse cx="73" cy="34" rx="4" ry="14" fill="#f9b8b0"/>`
+    + `<circle cx="60" cy="72" r="28" fill="#ffffff" stroke="#e6ddd3" stroke-width="1.5"/>`
+    + eyes(49, 71, 70) + blush(42, 78, 78)
+    + `<path d="M58 75.5 H62 L60 78 Z" fill="#f08f8f"/>`
+    + line('M60 78 Q57.5 81.5 55 79.5 M60 78 Q62.5 81.5 65 79.5') },
+  { label: ['Bear', 'くま'], art:
+    `<circle cx="37" cy="44" r="11" fill="#b9875f"/><circle cx="83" cy="44" r="11" fill="#b9875f"/>`
+    + `<circle cx="37" cy="44" r="5.5" fill="#e6c3a1"/><circle cx="83" cy="44" r="5.5" fill="#e6c3a1"/>`
+    + `<circle cx="60" cy="67" r="29" fill="#b9875f"/>`
+    + `<ellipse cx="60" cy="76" rx="13" ry="10" fill="#efd7bd"/>`
+    + `<ellipse cx="60" cy="72" rx="4.5" ry="3.3" fill="${INK_DOT}"/>`
+    + eyes(48, 72, 63) + blush(41, 79, 72)
+    + line('M60 75 V78 M55.5 78 Q60 82 64.5 78') },
+  { label: ['Monkey', 'さる'], art:
+    `<circle cx="31" cy="66" r="10" fill="#a8754f"/><circle cx="89" cy="66" r="10" fill="#a8754f"/>`
+    + `<circle cx="31" cy="66" r="5.5" fill="#f1d3b3"/><circle cx="89" cy="66" r="5.5" fill="#f1d3b3"/>`
+    + `<circle cx="60" cy="64" r="29" fill="#a8754f"/>`
+    + `<path d="M57 37 Q60 30 64 35" fill="none" stroke="#a8754f" stroke-width="3" stroke-linecap="round"/>`
+    + `<path d="M60 52 C52 44 38 50 41 62 C42 70 44 74 46 78 C50 88 70 88 74 78 C76 74 78 70 79 62 C82 50 68 44 60 52 Z" fill="#f1d3b3"/>`
+    + eyes(51, 69, 62) + blush(45, 75, 72)
+    + `<circle cx="58" cy="71" r="1" fill="${INK_DOT}"/><circle cx="62" cy="71" r="1" fill="${INK_DOT}"/>`
+    + line('M54 76 Q60 81 66 76') },
+  { label: ['Chick', 'ひよこ'], art:
+    `<path d="M58 37 Q55 28 59 25 Q62 30 61 37 Z M62 37 Q66 29 71 31 Q67 34 63.5 38 Z" fill="#f5c542"/>`
+    + `<path d="M33 74 Q24 66 30 58 Q38 66 36 76 Z" fill="#f5c542"/><path d="M87 74 Q96 66 90 58 Q82 66 84 76 Z" fill="#f5c542"/>`
+    + `<circle cx="60" cy="68" r="30" fill="#ffd96a"/>`
+    + eyes(49, 71, 64) + blush(42, 78, 72)
+    + `<path d="M55 69 L65 69 L60 75 Z" fill="#f59b42"/>` },
+  { label: ['Whale', 'くじら'], art:
+    `<path d="M45 42 Q43 32 47 27 M45 42 Q50 33 56 32 M45 42 Q39 34 35 35" fill="none" stroke="#8cc3e6" stroke-width="3" stroke-linecap="round"/>`
+    + `<path d="M90 68 Q101 55 106 60 Q101 66 106 75 Q99 74 90 74 Z" fill="#7fb7dc"/>`
+    + `<path d="M22 70 C22 52 40 44 58 45 C78 46 94 56 94 71 C94 85 80 92 58 92 C38 92 22 86 22 70 Z" fill="#8cc3e6"/>`
+    + `<path d="M26 77 C40 89 78 90 92 77 C88 88 76 92 58 92 C42 92 30 88 26 77 Z" fill="#dff0fa"/>`
+    + eyes(42, 58, 66) + blush(36, 64, 73)
+    + line('M46 73 Q50 76.5 54 73') },
+  { label: ['Panda', 'パンダ'], art:
+    `<circle cx="37" cy="43" r="10" fill="#2a2a33"/><circle cx="83" cy="43" r="10" fill="#2a2a33"/>`
+    + `<circle cx="60" cy="66" r="29" fill="#ffffff" stroke="#e3e3e8" stroke-width="1.5"/>`
+    + `<ellipse cx="48" cy="64" rx="7" ry="9" transform="rotate(-20 48 64)" fill="#2a2a33"/>`
+    + `<ellipse cx="72" cy="64" rx="7" ry="9" transform="rotate(20 72 64)" fill="#2a2a33"/>`
+    + `<circle cx="49" cy="63" r="2.6" fill="#ffffff"/><circle cx="71" cy="63" r="2.6" fill="#ffffff"/>`
+    + `<circle cx="49.6" cy="63.6" r="1.3" fill="${INK_DOT}"/><circle cx="71.6" cy="63.6" r="1.3" fill="${INK_DOT}"/>`
+    + `<ellipse cx="60" cy="73" rx="4" ry="3" fill="#2a2a33"/>`
+    + blush(40, 80, 75)
+    + line('M60 76 V78 M56 78 Q60 81 64 78') },
+];
+
+function illustrationSvg(i) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="240" height="240">`
+    + `<rect width="120" height="120" rx="14" fill="#e9f4f0"/><circle cx="60" cy="64" r="44" fill="#d7ebe4"/>`
+    + ILLUSTRATIONS[i].art + `</svg>`;
+}
+
+/* ---------- dress-up portrait: shape → color → face → extras ---------- */
+
+const AV_COLORS = [
+  { id: 'yellow', label: ['Yellow', 'きいろ'], fill: '#ffcf4d' },
+  { id: 'pink', label: ['Rose', 'ローズ'], fill: '#eea3b6' },
+  { id: 'sage', label: ['Sage', 'セージ'], fill: '#a3bf98' },
+  { id: 'sky', label: ['Baby blue', 'ベビーブルー'], fill: '#93c4e8' },
+  { id: 'navy', label: ['Navy', 'ネイビー'], fill: '#3f4c7e', dark: true },
+  { id: 'lavender', label: ['Lavender', 'ラベンダー'], fill: '#b3a0ec' },
+  { id: 'brown', label: ['Mocha', 'モカ'], fill: '#ad8160' },
+  { id: 'charcoal', label: ['Charcoal', 'チャコール'], fill: '#5d5e68', dark: true },
+];
+// Mix a hex color toward another (t = 0..1); used for the light and shadow sides of the plush.
+const mixHex = (a, b, t) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+
+// Each shape: how to draw the body, where the face sits (fy), where the top of the head is (top), half width (hw).
+// Portraits are drawn in a three-quarter view. The geometry below is laid out turned to the viewer's right and mirrored when drawn (inside each filter, so the filters still work), so it faces left:
+// the face sits right of centre (fx), the far eye and far ear are narrower, and light comes from the upper left.
+// A plump, mochi-like body that sits on the ground; dy moves it down to make room for tall ears.
+const mochi = (c, dy = 0) => `<path d="M60 ${42 + dy} C83 ${42 + dy} 95 ${60 + dy} 95 ${77 + dy} C95 ${93 + dy} 81 ${98 + dy} 60 ${98 + dy} C39 ${98 + dy} 25 ${93 + dy} 25 ${77 + dy} C25 ${60 + dy} 37 ${42 + dy} 60 ${42 + dy} Z" fill="${c.fill}"/>`;
+const tier = (c, x, y, w, h, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="${c.fill}"/><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="url(#tierG)"/>`;
+const cast = (cx, cy, rx, ry) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#2a1e30" opacity=".42" filter="url(#castF)"/>`;
+const crease = (d) => `<path d="${d}" fill="none" stroke="#2a1e30" stroke-opacity=".2" stroke-width="2.4" stroke-linecap="round"/>`;
+
+const AV_SHAPES = [
+  { id: 'round', label: ['Round', 'まる'], fx: 67, fy: 72, top: 44, hw: 34, body: (c) => mochi(c) },
+  { id: 'cloud', label: ['Cloud', 'くも'], fx: 67, fy: 73, top: 39, hw: 37,
+    body: (c) => [[62, 59, 20], [41, 71, 17], [81, 71, 17], [60, 80, 19], [42, 85, 13], [78, 85, 13]]
+      .map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c.fill}"/>`).join('')
+      + `<ellipse cx="61" cy="75" rx="29" ry="18" fill="${c.fill}" data-flat="1"/>` },
+  { id: 'heart', label: ['Heart', 'ハート'], fx: 66, fy: 68, top: 52, hw: 34,
+    body: (c) => `<path d="M62 97 C35 87 23 71 25 58 C27 43 47 39 62 53 C75 39 93 43 95 58 C97 71 88 87 62 97 Z" fill="${c.fill}"/>` },
+  { id: 'poop', label: ['Poop', 'うんち'], fx: 67, fy: 73, top: 44, hw: 38,
+    // Each tier is its own soft roll: lit on top, darker underneath, and the tier above casts a blurred shadow onto it.
+    body: (c) => [
+      tier(c, 22, 78, 76, 21, 10.5), cast(61, 80.5, 30, 3.8),
+      tier(c, 30, 61, 63, 23, 11.5), cast(63, 63.5, 21, 3.4),
+      tier(c, 40, 47, 45, 20, 10), cast(67, 49.5, 8, 2.4),
+      `<path d="M58 50 C56 41 63 35 73 33 C69 39 71 45 76 50 Z" fill="${c.fill}" stroke="${c.fill}" stroke-width="3" stroke-linejoin="round"/>`,
+      `<path d="M58 50 C56 41 63 35 73 33 C69 39 71 45 76 50 Z" fill="url(#tierG)"/>`,
+    ].join('') },
+  { id: 'triangle', label: ['Triangle', 'さんかく'], fx: 65, fy: 75, top: 45, hw: 30,
+    body: (c) => `<path d="M60 39 C70 39 76 48 84 60 C92 72 98 81 96 89 C94 97 86 99 76 99 L44 99 C34 99 26 97 24 89 C22 81 28 72 36 60 C44 48 50 39 60 39 Z" fill="${c.fill}"/>` },
+  { id: 'cat', label: ['Cat ears', 'ねこみみ'], fx: 67, fy: 74, top: 47, hw: 34,
+    body: (c) => `<path d="M35 64 L38 33 L60 49 Z M89 62 L89 37 L72 48 Z" fill="${c.fill}" stroke="${c.fill}" stroke-width="5" stroke-linejoin="round"/>`
+      + `<path d="M41 54 L42.5 40 L53 48 Z M84 53 L84.5 43 L77 48 Z" fill="${c.shade}" opacity=".6"/>` + mochi(c, 3) },
+  { id: 'bunny', label: ['Bunny ears', 'うさみみ'], fx: 67, fy: 77, top: 50, hw: 34,
+    body: (c) => `<ellipse cx="78" cy="36" rx="6.5" ry="18" transform="rotate(12 78 36)" fill="${c.fill}"/><ellipse cx="51" cy="34" rx="8.5" ry="19" transform="rotate(-4 51 34)" fill="${c.fill}"/>`
+      + `<ellipse cx="78.5" cy="38" rx="2.8" ry="11" transform="rotate(12 78 36)" fill="${c.shade}" opacity=".6"/><ellipse cx="51" cy="36" rx="4" ry="12" transform="rotate(-4 51 34)" fill="${c.shade}" opacity=".6"/>` + mochi(c, 5) },
+  { id: 'bear', label: ['Bear ears', 'くまみみ'], fx: 67, fy: 75, top: 47, hw: 34,
+    body: (c) => `<circle cx="40" cy="50" r="10.5" fill="${c.fill}"/><ellipse cx="86" cy="53" rx="8" ry="9.5" fill="${c.fill}"/>`
+      + `<circle cx="40" cy="50" r="5" fill="${c.shade}" opacity=".6"/><ellipse cx="86.5" cy="53" rx="3.3" ry="4.6" fill="${c.shade}" opacity=".6"/>` + mochi(c, 3) },
+];
+
+const avStroke = (d, ink, w = 1.8) => `<path d="${d}" fill="none" stroke="${ink}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const avOval = (x, y, ink, rx, ry, shine) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${ink}"/>`
+  + (shine ? `<ellipse cx="${x + rx * 0.3}" cy="${y - ry * 0.42}" rx="${rx * 0.36}" ry="${ry * 0.3}" fill="#ffffff" opacity=".95"/><circle cx="${x - rx * 0.35}" cy="${y + ry * 0.45}" r="${rx * 0.16}" fill="#ffffff" opacity=".7"/>` : '');
+// Near eye on the left, far eye on the right (narrower, because it is turned away).
+const NEAR = -8.5, FAR = 8.5, FS = 1; // both eyes the same size, so the face stays symmetrical as it turns
+const avEyes = (f, ink, rx, ry, sh) => avOval(f.x + NEAR, f.y, ink, rx, ry, sh) + avOval(f.x + FAR, f.y, ink, rx * FS, ry, sh);
+const avArc = (x, y, w, up, ink) => avStroke(`M${x - w} ${y + (up ? 1 : -1)} Q${x} ${y + (up ? -4 : 3)} ${x + w} ${y + (up ? 1 : -1)}`, ink, 2.1);
+// A dollar-sign eye, like the money-face emoji.
+const avDollar = (x, y) => { const X = (dx) => x - dx; // written mirror-image, because the face layer is flipped when drawn
+  const d = `M${X(2.9)} ${y - 2.6} C${X(2.2)} ${y - 4.3} ${X(-3.3)} ${y - 4.4} ${X(-3.1)} ${y - 1.5} C${X(-2.9)} ${y + 0.6} ${X(3.2)} ${y - 0.3} ${X(3.2)} ${y + 2.1} C${X(3.2)} ${y + 4.7} ${X(-2.4)} ${y + 4.6} ${X(-3.2)} ${y + 2.8} M${x} ${y - 6} V${y + 6}`;
+  return `<path d="${d}" fill="none" stroke="#8a6410" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`
+    + `<path d="${d}" fill="none" stroke="#f6c83a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`; };
+
+// A half-closed eye: the lower half of the oval under a straight, heavy lid (the deadpan ジト目 face).
+const avHalfEye = (x, y, ink, shine) => `<path d="M${x - 3.8} ${y - 0.6} L${x + 3.8} ${y - 0.6} A3.8 4.2 0 0 1 ${x - 3.8} ${y - 0.6} Z" fill="${ink}"/>`
+  + avStroke(`M${x - 4.6} ${y - 0.9} L${x + 4.4} ${y - 0.9}`, ink, 2.2)
+  + (shine ? `<ellipse cx="${x + 1.3}" cy="${y + 1.1}" rx="1.1" ry=".8" fill="#ffffff" opacity=".9"/>` : '');
+
+// Sunglasses: two dark rounded lenses with a bridge and a glint (they do not blink).
+const avShades = (f) => [f.x + NEAR, f.x + FAR].map((x) =>
+  `<path d="M${x - 6.5} ${f.y - 4} H${x + 6.5} Q${x + 7} ${f.y + 5} ${x} ${f.y + 5} Q${x - 7} ${f.y + 5} ${x - 6.5} ${f.y - 4} Z" fill="#1d1e26"/>`
+  + `<path d="M${x + 3.5} ${f.y - 2.6} L${x + 1} ${f.y + 2}" stroke="#ffffff" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/>`).join('')
+  + `<path d="M${f.x + NEAR + 6.5} ${f.y - 3.4} Q${f.x} ${f.y - 5.4} ${f.x + FAR - 6.5} ${f.y - 3.4}" fill="none" stroke="#1d1e26" stroke-width="1.6"/>`
+  + `<path d="M${f.x + NEAR - 6.5} ${f.y - 3.6} L${f.x + NEAR - 14} ${f.y - 5}" stroke="#1d1e26" stroke-width="1.6" stroke-linecap="round"/>`;
+
+// Faces are eyes only, no mouth.
+const AV_FACES = [
+  { id: 'smile', label: ['Classic', 'ふつう'], draw: (f, ink, sh) => avEyes(f, ink, 3.4, 4.6, sh) },
+  { id: 'sparkle', label: ['Sparkly', 'きらきら'], blush: true, draw: (f, ink, sh) => avEyes(f, ink, 4.3, 5.5, sh) },
+  { id: 'happy', label: ['Happy', 'にっこり'], draw: (f, ink) => avArc(f.x + NEAR, f.y, 3.5, true, ink) + avArc(f.x + FAR, f.y, 3.5 * FS, true, ink) },
+  { id: 'sleepy', label: ['Sleepy', 'ねむねむ'], draw: (f, ink) => avArc(f.x + NEAR, f.y, 3.5, false, ink) + avArc(f.x + FAR, f.y, 3.5 * FS, false, ink) },
+  { id: 'wow', label: ['Round', 'まんまる'], draw: (f, ink, sh) => avEyes(f, ink, 3.9, 3.9, sh) },
+  { id: 'cool', label: ['Deadpan', 'ジト目'], draw: (f, ink, sh) => avHalfEye(f.x + NEAR, f.y, ink, sh) + avHalfEye(f.x + FAR, f.y, ink, sh) },
+  { id: 'shades', label: ['Shades', 'サングラス'], noBlink: true, draw: (f) => avShades(f) },
+  { id: 'money', label: ['Money', 'おかね'], draw: (f) => avDollar(f.x + NEAR, f.y) + avDollar(f.x + FAR, f.y) },
+];
+
+const AV_EXTRAS = [
+  { id: 'none', label: ['None', 'なし'], draw: () => '' },
+  { id: 'cap', label: ['Cap', 'キャップ'], draw: (s) => { const t = s.top + 2, c = s.fx - 4;
+      // a baseball cap, its brim pointing the way the face looks
+      return `<path d="M${c - 17} ${t + 1} C${c - 18} ${t - 18} ${c + 15} ${t - 19} ${c + 16} ${t + 1} Z" fill="#3b5ba5"/>`
+        + `<path d="M${c - 1} ${t - 15} C${c - 3} ${t - 8} ${c - 3} ${t - 3} ${c - 2} ${t + 1}" fill="none" stroke="#2c4785" stroke-width="1.2"/>`
+        + `<path d="M${c - 12} ${t - 9} C${c - 10} ${t - 13} ${c - 6} ${t - 15} ${c - 3} ${t - 15}" fill="none" stroke="#ffffff" stroke-opacity=".35" stroke-width="2" stroke-linecap="round"/>`
+        + `<path d="M${c + 8} ${t - 1} C${c + 20} ${t - 3} ${c + 31} ${t - 1} ${c + 32} ${t + 2} C${c + 30} ${t + 5} ${c + 16} ${t + 5} ${c + 8} ${t + 3} Z" fill="#2c4785"/>`
+        + `<path d="M${c - 17} ${t + 1} L${c + 16} ${t + 1}" stroke="#e85a5a" stroke-width="2.4" stroke-linecap="round"/>`
+        + `<circle cx="${c - 1}" cy="${t - 16.5}" r="1.9" fill="#2c4785"/>`; } },
+  { id: 'flower', label: ['Flower', 'おはな'], draw: (s) => { const x = s.fx - 20, y = s.top + 4;
+      return [0, 72, 144, 216, 288].map((a) => `<circle cx="${x + 5 * Math.cos(a * Math.PI / 180)}" cy="${y + 5 * Math.sin(a * Math.PI / 180)}" r="4" fill="#ffffff" stroke="#f0c7d2" stroke-width="1"/>`).join('')
+        + `<circle cx="${x}" cy="${y}" r="3" fill="#ffc93c"/>`; } },
+  { id: 'crown', label: ['Crown', 'おうかん'], draw: (s) => { const t = s.top + 2, c = s.fx - 3;
+      // Seen a little from above: the back of the ring shows, the points are shaded gold, the band carries jewels.
+      return `<linearGradient id="goldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset=".45" stop-color="#f4c43c"/><stop offset="1" stop-color="#c38a14"/></linearGradient>`
+        + `<linearGradient id="goldS" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity=".45"/><stop offset=".35" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#7a4f00" stop-opacity=".28"/></linearGradient>`
+        + `<linearGradient id="bandG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8d35a"/><stop offset="1" stop-color="#b17a10"/></linearGradient>`
+        + `<ellipse cx="${c}" cy="${t - 3}" rx="12.6" ry="2.6" fill="#9a6a0c"/>`
+        + `<path d="M${c - 13} ${t - 2} L${c - 14.5} ${t - 14} L${c - 7} ${t - 7.5} L${c} ${t - 17} L${c + 7} ${t - 7.5} L${c + 14.5} ${t - 14} L${c + 13} ${t - 2} Z" fill="url(#goldG)" stroke="#b07a10" stroke-width=".8" stroke-linejoin="round"/>`
+        + `<path d="M${c - 13} ${t - 2} L${c - 14.5} ${t - 14} L${c - 7} ${t - 7.5} L${c} ${t - 17} L${c + 7} ${t - 7.5} L${c + 14.5} ${t - 14} L${c + 13} ${t - 2} Z" fill="url(#goldS)"/>`
+        + [[c - 14.5, t - 14], [c, t - 17], [c + 14.5, t - 14]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.9" fill="url(#goldG)" stroke="#b07a10" stroke-width=".6"/><circle cx="${x - 0.6}" cy="${y - 0.6}" r=".6" fill="#ffffff" opacity=".85"/>`).join('')
+        + `<path d="M${c - 13.6} ${t - 4.6} Q${c} ${t - 1.4} ${c + 13.6} ${t - 4.6} L${c + 13.6} ${t + 0.4} Q${c} ${t + 3.6} ${c - 13.6} ${t + 0.4} Z" fill="url(#bandG)" stroke="#9a6a0c" stroke-width=".6"/>`
+        + `<path d="M${c - 12.5} ${t - 3.6} Q${c} ${t - 0.6} ${c + 12.5} ${t - 3.6}" fill="none" stroke="#fff4c2" stroke-opacity=".7" stroke-width=".6"/>`
+        + `<ellipse cx="${c}" cy="${t + 0.1}" rx="2.4" ry="1.9" fill="#d8304a" stroke="#8e1a2c" stroke-width=".5"/><circle cx="${c - 0.8}" cy="${t - 0.6}" r=".55" fill="#ffffff" opacity=".9"/>`
+        + [c - 8, c + 8].map((x) => `<circle cx="${x}" cy="${t - 0.9}" r="1.4" fill="#3d7fe0" stroke="#1d4a96" stroke-width=".4"/><circle cx="${x - 0.45}" cy="${t - 1.35}" r=".4" fill="#ffffff" opacity=".9"/>`).join('')
+        + `<circle cx="${c - 7}" cy="${t - 9.5}" r="1" fill="#d8304a"/><circle cx="${c + 7}" cy="${t - 9.5}" r="1" fill="#d8304a"/>`; } },
+  { id: 'tophat', label: ['Top hat', 'シルクハット'], draw: (s) => { const t = s.top + 1, c = s.fx - 4;
+      return `<g transform="rotate(-9 ${c} ${t})">`
+        + `<path d="M${c - 11} ${t - 1} L${c - 12} ${t - 23} Q${c} ${t - 26} ${c + 12} ${t - 23} L${c + 11} ${t - 1} Z" fill="#2b2d3a"/>`
+        + `<path d="M${c - 11.4} ${t - 7} L${c + 11.4} ${t - 7} L${c + 11} ${t - 2} L${c - 11} ${t - 2} Z" fill="#c94f5c"/>`
+        + `<path d="M${c - 8.5} ${t - 21} L${c - 8} ${t - 9}" stroke="#ffffff" stroke-opacity=".22" stroke-width="2.6" stroke-linecap="round"/>`
+        + `<ellipse cx="${c}" cy="${t - 23}" rx="12" ry="2.6" fill="#3d4052"/>`
+        + `<ellipse cx="${c}" cy="${t}" rx="20" ry="4.6" fill="#2b2d3a"/><path d="M${c - 18} ${t - 1.2} Q${c} ${t - 4} ${c + 18} ${t - 1.2}" fill="none" stroke="#ffffff" stroke-opacity=".18" stroke-width="1.2"/>`
+        + `</g>`; } },
+  { id: 'sprout', label: ['Sprout', 'ふたば'], draw: (s) => { const t = s.top + 1, c = s.fx - 4;
+      return `<path d="M${c} ${t} V${t - 9}" stroke="#5aa95c" stroke-width="2.2" stroke-linecap="round"/><path d="M${c} ${t - 9} C${c - 6} ${t - 17} ${c - 14} ${t - 14} ${c - 13} ${t - 10} C${c - 10} ${t - 7} ${c - 4} ${t - 7} ${c} ${t - 9} Z M${c} ${t - 9} C${c + 5} ${t - 16} ${c + 11} ${t - 13} ${c + 10} ${t - 10} C${c + 8} ${t - 7} ${c + 3} ${t - 7} ${c} ${t - 9} Z" fill="#7cc576"/>`; } },
+  { id: 'glasses', label: ['Glasses', 'めがね'], draw: (s, ink) => { const y = s.fy, n = s.fx + NEAR, f = s.fx + FAR;
+      return `<circle cx="${n}" cy="${y}" r="7.5" fill="#ffffff" fill-opacity=".25" stroke="${ink}" stroke-width="2"/><ellipse cx="${f}" cy="${y}" rx="${7.5 * FS}" ry="7.5" fill="#ffffff" fill-opacity=".25" stroke="${ink}" stroke-width="2"/>`
+        + avStroke(`M${n + 7.5} ${y} Q${s.fx} ${y - 2} ${f - 7.5 * FS} ${y}`, ink, 2) + avStroke(`M${n - 7.5} ${y - 1} L${n - 17} ${y - 3}`, ink, 2); } },
+  { id: 'headphones', label: ['Headphones', 'ヘッドホン'], draw: (s) => { const nx = 60 - s.hw + 9, fx = 60 + s.hw - 1, y = s.fy - 1;
+      return `<path d="M${nx} ${y - 6} C${nx - 2} ${s.top - 20} ${fx} ${s.top - 18} ${fx} ${y - 4}" fill="none" stroke="#3a3f55" stroke-width="4" stroke-linecap="round"/>`
+        + `<ellipse cx="${fx}" cy="${y}" rx="3" ry="7" fill="#3a3f55"/><ellipse cx="${nx}" cy="${y}" rx="6" ry="9" fill="#3a3f55"/><ellipse cx="${nx - 1.5}" cy="${y - 2}" rx="2" ry="4" fill="#ffffff" opacity=".18"/>`; } },
+];
+
+const AV_DEFAULT = { shape: 'round', color: 'yellow', face: 'smile', acc: 'none' };
+const pick = (list, id) => list.find((item) => item.id === id) || list[0];
+
+/* ---------- fur: the body is painted strand by strand on a canvas ---------- */
+// The SVG body shapes are read back as canvas paths. Each lump (a cloud bump, a poop tier, an ear) grows its own fur
+// outward from its centre, so lumps read as separate soft masses. Strands near a lump's middle point at the viewer and
+// look short; strands near its edge lie flat and look long, and the ones on the rim stick out past the silhouette.
+const FUR_CACHE = new Map();
+const FUR_PX = 3; // canvas pixels per drawing unit (the drawing is 120 units square)
+
+function seededRandom(text) {
+  let h = 2166136261;
+  for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return () => { h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16; return (h >>> 0) / 4294967296; };
+}
+const hexRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+
+// Turn the shape's SVG markup into canvas paths with a centre and radius for each piece.
+function furPieces(markup) {
+  const doc = new DOMParser().parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${markup}</svg>`, 'image/svg+xml');
+  const pieces = [];
+  for (const el of doc.documentElement.children) {
+    const n = (k) => parseFloat(el.getAttribute(k) || '0');
+    const fill = el.getAttribute('fill') || '';
+    const kind = fill === 'BODY' ? 'body' : fill === 'SHADE' ? 'inner' : el.getAttribute('opacity') && fill.startsWith('#') ? 'cast' : fill.startsWith('url') ? 'skip' : 'body';
+    if (kind === 'skip') continue;
+    const path = new Path2D();
+    let cx, cy, rx, ry, box;
+    if (el.tagName === 'circle') { cx = n('cx'); cy = n('cy'); rx = ry = n('r'); path.arc(cx, cy, rx, 0, Math.PI * 2); }
+    else if (el.tagName === 'ellipse') {
+      cx = n('cx'); cy = n('cy'); rx = n('rx'); ry = n('ry');
+      const rot = /rotate\(([-\d.]+)/.exec(el.getAttribute('transform') || '');
+      path.ellipse(cx, cy, rx, ry, rot ? parseFloat(rot[1]) * Math.PI / 180 : 0, 0, Math.PI * 2);
+    } else if (el.tagName === 'rect') {
+      const x = n('x'), y = n('y'), w = n('width'), h = n('height');
+      path.roundRect(x, y, w, h, n('rx')); cx = x + w / 2; cy = y + h / 2; rx = w / 2; ry = h / 2;
+    } else if (el.tagName === 'path') {
+      const d = el.getAttribute('d');
+      path.addPath(new Path2D(d));
+      const nums = d.match(/-?\d*\.?\d+/g).map(Number);
+      const xs = nums.filter((_, i) => i % 2 === 0), ys = nums.filter((_, i) => i % 2 === 1);
+      const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+      cx = (x0 + x1) / 2; cy = (y0 + y1) / 2 + (y1 - y0) * 0.08; rx = (x1 - x0) / 2; ry = (y1 - y0) / 2;
+      box = { x0, x1, y0, y1 }; // fur grows from slightly below the middle, but is sampled over the whole shape
+      if (el.getAttribute('stroke')) path.addPath(new Path2D(d)); // the stroke only rounds corners; the fur hides it
+    } else continue;
+    const flat = el.getAttribute('data-flat') === '1';
+    box = box || { x0: cx - rx, x1: cx + rx, y0: cy - ry, y1: cy + ry };
+    pieces.push({ kind, path, cx, cy, rx, ry, flat, box });
+  }
+  return pieces;
+}
+
+function furPng(shape, color) {
+  const key = `${shape.id}|${color.id}`;
+  if (FUR_CACHE.has(key)) return FUR_CACHE.get(key);
+  const S = 120 * FUR_PX;
+  const canvas = document.createElement('canvas');
+  canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const rand = seededRandom(key);
+  // Drawn in layout space (turned to the viewer's right), mirrored onto the canvas so the figure faces left.
+  ctx.setTransform(-FUR_PX, 0, 0, FUR_PX, S, 0);
+  const pieces = furPieces(shape.body({ fill: 'BODY', shade: 'SHADE' }));
+  const bodies = pieces.filter((p) => p.kind === 'body');
+  const base = hexRgb(color.fill);
+  const light = { x: 70, y: shape.fy - 22 }; // light from the front, slightly above (layout space)
+  const inside = (p, x, y) => ctx.isPointInPath(p.path, x * -FUR_PX + S, y * FUR_PX);
+  const tone = (x, y) => {
+    // Bright near the light, darker toward the far side and the bottom (a soft ball, not a flat disc).
+    const d = Math.hypot(x - light.x, (y - light.y) * 1.1) / 52;
+    const bottom = Math.max(0, (y - 88) / 14);
+    return 1.28 - d * 0.62 - bottom * 0.28;
+  };
+  const rgba = (f, a, rgb = base) => {
+    const c = rgb.map((v) => (f >= 1 ? v + (255 - v) * Math.min(1, (f - 1) * (color.dark ? 0.9 : 1.15)) : v * Math.max(0, f)));
+    return `rgba(${c.map((v) => Math.round(Math.min(255, v))).join(',')},${a})`;
+  };
+
+  pieces.forEach((p, idx) => {
+    if (p.kind === 'cast') {
+      // A soft shadow that the lump above throws on the one below.
+      const g = ctx.createRadialGradient(p.cx, p.cy, 0, p.cx, p.cy, p.rx);
+      g.addColorStop(0, 'rgba(40,24,30,.72)'); g.addColorStop(.55, 'rgba(40,24,30,.32)'); g.addColorStop(1, 'rgba(40,24,30,0)');
+      ctx.save(); ctx.translate(p.cx, p.cy); ctx.scale(1, p.ry / p.rx * 2.2); ctx.translate(-p.cx, -p.cy);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.cx, p.cy, p.rx, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      return;
+    }
+    const inner = p.kind === 'inner';
+    const rgb = inner ? hexRgb(mixHex(color.fill, '#ff8fa0', 0.3)) : base;
+    // Undercoat: a darker fill so gaps between strands read as depth.
+    ctx.fillStyle = rgba(inner ? 0.78 : 0.72, 1, rgb);
+    ctx.fill(p.path);
+    const R = Math.max(p.rx, p.ry);
+    const count = Math.round((p.box.x1 - p.box.x0) * (p.box.y1 - p.box.y0) / 4 * (inner ? 6 : 13));
+    for (let i = 0; i < count; i += 1) {
+      const x = p.box.x0 - 0.5 + rand() * (p.box.x1 - p.box.x0 + 1), y = p.box.y0 - 0.5 + rand() * (p.box.y1 - p.box.y0 + 1);
+      if (!inside(p, x, y)) continue;
+      const dx = x - p.cx, dy = y - p.cy;
+      const dist = Math.min(1, Math.hypot(dx / p.rx, dy / p.ry));
+      let ang = Math.atan2(dy, dx) + (rand() - 0.5) * 0.6;
+      ang += Math.sin(ang - Math.PI / 2) * -0.25; // fur droops a little under its own weight
+      const len = (inner ? 0.5 : 0.65) + dist * dist * (inner ? 0.95 : 1.65) + rand() * 0.5;
+      // each lump is also shaded on its own: lighter on top, darker underneath, so lumps and tiers stay distinct
+      const own = p.flat ? 1 : 1 + Math.max(-1, Math.min(1, dy / p.ry)) * -0.16 - Math.max(0, dy / p.ry - 0.55) * 0.25;
+      const f = tone(x, y) * own * (0.88 + rand() * 0.22) * (inner ? 0.95 : 1);
+      ctx.strokeStyle = rgba(f, 0.4 + rand() * 0.45, rgb);
+      ctx.lineWidth = 0.2 + rand() * 0.24;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      const bend = (rand() - 0.5) * 0.8;
+      ctx.quadraticCurveTo(x + Math.cos(ang + bend) * len * 0.6, y + Math.sin(ang + bend) * len * 0.6, x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+      ctx.stroke();
+    }
+    // A sprinkle of light tips catches the light on the side facing it.
+    for (let i = 0; i < count * 0.12; i += 1) {
+      const x = p.box.x0 + rand() * (p.box.x1 - p.box.x0), y = p.box.y0 + rand() * (p.box.y1 - p.box.y0);
+      if (!inside(p, x, y) || tone(x, y) < 1) continue;
+      ctx.fillStyle = `rgba(255,255,255,${0.08 + rand() * 0.14})`;
+      ctx.fillRect(x, y, 0.35, 0.35);
+    }
+  });
+  const url = canvas.toDataURL('image/png');
+  FUR_CACHE.set(key, url);
+  return url;
+}
+
+// Motion for live portraits: the face slides across the body as if the head turns left and right, the eyes blink.
+const TURN = 'dur="7s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.3;.5;.8;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1;.45 0 .55 1"';
+const turnBy = (dx) => `<animateTransform attributeName="transform" type="translate" values="0 0;0 0;${dx} 0;${dx} 0;0 0" ${TURN}/>`;
+// Now and then a small hop (with a little second bounce); the shadow shrinks while it is in the air.
+const JUMP_TIMING = 'keyTimes="0;.8;.86;.92;.95;.98;1" dur="6.5s" repeatCount="indefinite" calcMode="spline" keySplines="0 0 1 1;.2 .6 .4 1;.6 0 .8 .4;.2 .6 .4 1;.6 0 .8 .4;0 0 1 1"';
+const JUMP = `<animateTransform attributeName="transform" type="translate" values="0 0;0 0;0 -8;0 0;0 -2.5;0 0;0 0" ${JUMP_TIMING}/>`;
+const JUMP_SHADOW = `<animateTransform attributeName="transform" type="scale" values="1 1;1 1;.78 .78;1 1;.93 .93;1 1;1 1" ${JUMP_TIMING}/>`;
+const blinkAt = (y, inner) => `<g transform="translate(0 ${y})"><g><animateTransform attributeName="transform" type="scale" values="1 1;1 1;1 .08;1 1" keyTimes="0;.9;.94;1" dur="4.3s" repeatCount="indefinite"/><g transform="translate(0 ${-y})">${inner}</g></g></g>`;
+
+function builtAvatarSvg(a, animate = false) {
+  const shape = pick(AV_SHAPES, a.shape), color = pick(AV_COLORS, a.color);
+  const face = pick(AV_FACES, a.face), extra = pick(AV_EXTRAS, a.acc);
+  const ink = color.dark ? '#f6f2ea' : '#221b25';
+  const fy = shape.fy;
+  const M = (inner) => `<g transform="matrix(-1 0 0 1 120 0)">${inner}</g>`;
+  const blush = !face.blush ? '' : M([[shape.fx - 16, 5], [shape.fx + 16, 5]].map(([x, rx]) => `<ellipse cx="${x}" cy="${fy + 6}" rx="${rx}" ry="3.4" fill="#ff7f86" opacity="${color.dark ? '.55' : '.42'}" filter="url(#blushF)"/>`).join(''));
+  const eyes = `<g filter="url(#lift)">${M(face.draw({ x: shape.fx, y: fy }, ink, !color.dark))}</g>`;
+  const faceLayer = blush + (animate && !face.noBlink ? blinkAt(fy, eyes) : eyes);
+  const extraLayer = `<g filter="url(#lift)">${M(extra.draw(shape, ink))}</g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="240" height="240">`
+    + `<defs>`
+    + `<filter id="ground" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="2.6"/></filter>`
+    + `<filter id="contact" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="1.2"/></filter>`
+    + `<filter id="blushF" x="-50%" y="-80%" width="200%" height="260%"><feGaussianBlur stdDeviation="1.6"/></filter>`
+    + `<filter id="lift" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx=".4" dy="1.4" stdDeviation=".9" flood-color="#2a1e30" flood-opacity=".28"/></filter>`
+    + `</defs>`
+    + `<rect width="120" height="120" rx="14" fill="#eef6f3"/>`
+    + (animate ? `<g transform="translate(60 101)"><g>${JUMP_SHADOW}<g transform="translate(-60 -101)">` : '')
+    + `<ellipse cx="63" cy="101" rx="35" ry="5.5" fill="#1d2a26" opacity=".34" filter="url(#ground)"/>`
+    + `<ellipse cx="58" cy="99.5" rx="23" ry="2.6" fill="#1d2a26" opacity=".38" filter="url(#contact)"/>`
+    + (animate ? `</g></g></g><g>${JUMP}` : '')
+    + (animate ? `<g>${turnBy(1.5)}` : '<g>') + `<image width="120" height="120" href="${furPng(shape, color)}"/></g>`
+    + (animate ? `<g>${turnBy(13)}${faceLayer}</g>` : faceLayer)
+    + (animate ? `<g>${turnBy(7)}${extraLayer}</g>` : extraLayer)
+    + (animate ? '</g>' : '')
+    + `</svg>`;
+}
+
+// data.avatar is a dress-up recipe { shape, color, face, acc }; a number is one of the older ready-made illustrations (used by the sample entry).
+// animate: true gives the moving portrait (turning and blinking) used while answering and on the finished article.
+// spot names where the image sits: each animated copy gets its own address, because Safari freezes an animated
+// image that is shown in more than one place at once.
+const avatarUrl = (a, animate = false, spot = '') => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+  (Number.isInteger(a) ? illustrationSvg(a) : builtAvatarSvg({ ...AV_DEFAULT, ...(a || {}) }, animate)) + (spot ? `<!--${spot}-->` : ''));
+
+
+/* ---------- translating free-text answers ---------- */
+// Answers typed by hand appear in both the English and the Japanese text. Each is translated once
+// (English → Japanese or Japanese → English); until then, or if translation fails, they show as typed.
+const TR_CACHE = new Map(); // typed text → { en, ja }
+const isOption = (list, value) => list.some(([en]) => en === value);
+const trEn = (t) => { const k = (t || '').trim(); return TR_CACHE.get(k)?.en || k; };
+const trJa = (t) => { const k = (t || '').trim(); const preset = jaOf(k); return preset !== k ? preset : (TR_CACHE.get(k)?.ja || k); };
+
+function freeTextItems(data) {
+  const items = [];
+  const add = (text, role) => { const t = (text || '').trim().replace(/[.。]$/, ''); if (t && !items.some((i) => i.text === t)) items.push({ text: t, role }); };
+  if (data.name && !isOption(nameOptions, data.name)) add(data.name, 'a person’s name. Japanese names go into English romanized in Western order (Given Family); other names go into Japanese in katakana.');
+  add(data.titleOther, 'the person\'s occupation or title. English fits "X was ___" (with a/an); Japanese is a noun phrase that fits "〜出身の___。"');
+  add(data.traitOther, 'what the person was like. English fits "known for being ___". Japanese must be able to go right before 人物 (for example ちょっと頑固な); change the typed Japanese only as much as that needs.');
+  const place = (data.birthplace || '').trim();
+  if (place && !allOptions.find(([e]) => e === place)) { const p = placeNames(place); if (p.en === p.ja) add(place, 'a birthplace: a place name, or a phrase saying where. English fits "born ___" (a name or a noun phrase is written without "in"; a phrase like "in a stable" keeps its preposition); Japanese is a place name or a phrase ending in で like 馬小屋で.'); }
+  add(data.mattered, 'something the person cherished. English is a short phrase that fits "X cherished ___" (third person, no quotes); Japanese is a noun phrase that fits "___を大切にしていた。"');
+  add(data.anecdote, 'a short anecdote about the person. Write a full sentence in each language.');
+  if (!isOption(endWhoOptions, data.endWho)) add(data.endWho, 'who was with them when they died. English like "surrounded by family"; Japanese like "家族に囲まれて".');
+  if (!isOption(endConditionOptions, data.endCondition)) add(data.endCondition, 'the state they were in when they died. English like "just like their usual self"; Japanese like "いつもの調子で".');
+  if (!isOption(endPlaceOptions, data.endPlace)) add(data.endPlace, 'where they died. English like "in a hospital bed"; Japanese like "病院のベッドで".');
+  add(data.viewTopicOther, 'a topic about life and death that the person took a position on. English is a noun phrase that fits "On ___, X was in favor"; Japanese is a noun phrase that fits "___については".');
+  add(data.viewReason, 'the person\'s reason for their position. English is a noun phrase that fits "citing ___"; Japanese is a phrase that fits "___という理由から" (no から or ので at the end).');
+  add(data.lastWords, 'the person\'s last words, a quotation. Keep it as words they said (first person is fine here); no quotation marks.');
+  add(data.legacyTo, 'who the person left something to. English is a noun phrase in third person (my sister → their sister) that fits "left X to ___"; Japanese is a noun that fits "___に".');
+  add(data.legacyWhat, 'what the person left to someone. English is a noun phrase in third person (my guitar → their guitar) that fits "left ___ to someone"; Japanese is a noun that fits "___を遺した".');
+  add(data.endOther, 'how their life ended, a phrase. English fits "Of their last moments, it is said: ___"; Japanese fits "その最期は「___」であったという。"');
+  return items;
+}
+
+// Free-text answers are translated with MyMemory (https://mymemory.translated.net), a free translation service
+// that can be called straight from the browser, so this page works on any ordinary web host.
+// Anonymous use allows 5,000 characters a day per IP address. Put an email address here to raise that to
+// 50,000 characters a day for the whole site (counted for the address, not per visitor).
+const MYMEMORY_EMAIL = 'caminacartes@gmail.com';
+const decodeEntities = (t) => { const el = document.createElement('textarea'); el.innerHTML = t; return el.value; };
+const toThirdPerson = (t) => t.replace(/\bmyself\b/gi, 'themselves').replace(/\bmy\b/gi, 'their').replace(/\bmine\b/gi, 'theirs').replace(/\bme\b/gi, 'them').replace(/\bI\b/g, 'they');
+
+async function myMemory(text, from, to) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}${MYMEMORY_EMAIL ? `&de=${encodeURIComponent(MYMEMORY_EMAIL)}` : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`http_${res.status}`);
+  const body = await res.json();
+  const out = decodeEntities(String(body?.responseData?.translatedText || '')).trim();
+  // over the daily limit, MyMemory answers with a warning in place of a translation
+  if (Number(body?.responseStatus) !== 200 || !out || /MYMEMORY WARNING|QUERY LENGTH LIMIT|INVALID LANGUAGE/i.test(out)) throw new Error('limit');
+  return out;
+}
+
+// One request may carry up to 500 bytes, so longer text goes sentence by sentence.
+async function translateText(text, from, to) {
+  if (new TextEncoder().encode(text).length <= 450) return myMemory(text, from, to);
+  const parts = text.match(/[^。．.!?！？]+[。．.!?！？]*/g) || [text];
+  const done = [];
+  for (const part of parts) done.push(await myMemory(part.trim(), from, to));
+  return done.join(to === 'ja' ? '' : ' ');
+}
+
+// Resolves 'done', 'partial' (some came back), or 'upstream_error' (nothing could be translated).
+async function translateFreeText(items) {
+  const todo = items.filter((i) => !TR_CACHE.has(i.text));
+  if (!todo.length) return 'done';
+  await Promise.all(todo.map(async ({ text, role }) => {
+    const ja = hasJapanese(text);
+    const isQuote = role.startsWith('the person\'s last words');
+    const isName = role.startsWith('a person’s name');
+    // a name in kana is romanized here (あゆみ → Ayumi) rather than sent to be translated as a word
+    if (isName && isKanaOnly(text)) { TR_CACHE.set(text, { en: kanaToRomaji(text), ja: text }); return; }
+    try {
+      let other = (await translateText(text, ja ? 'ja' : 'en', ja ? 'en' : 'ja')).replace(/[.。]$/, '');
+      if (ja) {
+        if (isName && !/[A-Za-z]/.test(other)) other = text; // a name the service could not read stays as typed
+        if (!isQuote && !isName && !role.startsWith('a short anecdote')) other = toThirdPerson(other.charAt(0).toLowerCase() + other.slice(1));
+        TR_CACHE.set(text, { en: other, ja: text });
+      } else {
+        TR_CACHE.set(text, { en: isQuote || isName ? text : toThirdPerson(text), ja: other });
+      }
+    } catch { /* this one stays as typed */ }
+  }));
+  const got = todo.filter((i) => TR_CACHE.has(i.text)).length;
+  return got === todo.length ? 'done' : got ? 'partial' : 'upstream_error';
+}
+
+function toggleValue(values, value) {
+  return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+}
+
+function listEn(items) {
+  if (items.length <= 1) return items.join('');
+  return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+}
+
+/* Everything the article and the saved card print, derived once from the answers. */
+function entryOf(data) {
+  // Typed answers go through trEn / trJa, so each language shows its own version once it is translated.
+  const titlesEn = [...data.titles, trEn(data.titleOther)].filter(Boolean);
+  const titlesJa = [...data.titles.map(jaOf), trJa(data.titleOther)].filter(Boolean);
+  const traitsEn = [...data.traits, trEn(data.traitOther)].filter(Boolean);
+  const traitsJaText = traitsJaPhrase(data.traits, trJa(data.traitOther));
+  const endRaw = [data.endCondition, data.endWho, data.endPlace].map((v) => v.trim()).filter(Boolean);
+  const endParts = endRaw.map(trEn);
+  const endPartsJa = endRaw.map(trJa);
+  const over100 = data.lifespan >= 100;
+  const born = data.birthYear || '20XX';
+  const deathYear = data.birthYear ? Number(data.birthYear) + data.lifespan : '20XX';
+  // a name typed in kana is romanized straight away (あゆみ → Ayumi); others wait for the translation
+  const name = data.name ? (TR_CACHE.get(data.name.trim())?.en || (isKanaOnly(data.name.trim()) ? kanaToRomaji(data.name.trim()) : data.name.trim())) : 'Name not given yet';
+  const nameJa = data.name ? trJa(data.name) : 'まだ名前のない人';
+  const title = listEn(titlesEn) || 'someone who found their own way';
+  const titleJa = titlesJa.join('、') || '自分の道を歩いた人';
+  const traits = listEn(traitsEn);
+  // A preset ("a small town") or the sample's place keeps its own translation; anything typed goes through placeNames.
+  const presetPlace = allOptions.find(([e]) => e === data.birthplace);
+  const place = presetPlace ? { en: presetPlace[0], ja: presetPlace[1] } : placeNames(data.birthplace || '');
+  const placeTr = TR_CACHE.get((data.birthplace || '').trim());
+  const birthplace = placeTr?.en || place.en || 'somewhere';
+  const birthplaceJa = placeTr?.ja || place.ja || 'どこかの街';
+  const matteredRaw = data.mattered.trim().replace(/[.。]$/, '');
+  // chosen chips plus anything typed, e.g. "their honest feelings and making coffee" / 「自分の正直な気持ちや毎朝コーヒーを淹れること」
+  const mattersEn = [...(data.matters || []).map(articleEnOf), trEn(matteredRaw)].filter(Boolean);
+  const mattersJa = [...(data.matters || []).map(jaOf), trJa(matteredRaw)].filter(Boolean);
+  const mattered = listEn(mattersEn);
+  const matteredJa = mattersJa.length > 1 ? mattersJa.slice(0, -1).join('、') + 'や' + mattersJa[mattersJa.length - 1] : mattersJa.join('');
+  const anecdoteRaw = data.anecdote.trim().replace(/[.。]$/, '');
+  const anecdote = trEn(anecdoteRaw), anecdoteJa = trJa(anecdoteRaw);
+  // one belief: "臓器移植については、遺族感情への配慮という理由から、反対の立場を取っていた。"
+  const topicRaw = (data.viewTopic || (data.viewTopicOther || '').trim()).replace(/[.。]$/, '');
+  const reasonRaw = (data.viewReason || '').trim().replace(/[.。]$/, '');
+  const view = topicRaw && data.viewStance ? {
+    stance: data.viewStance,
+    topicEn: data.viewTopic ? articleEnOf(data.viewTopic) : trEn(topicRaw),
+    topicJa: trJa(topicRaw),
+    reasonEn: reasonRaw ? trEn(reasonRaw) : '',
+    reasonJa: reasonRaw ? trJa(reasonRaw).replace(/(から|ので|ため)$/, '') : '',
+  } : null;
+  // last words (a quote, kept as said) and something left to someone: 「妹にギターを遺した。」
+  const lastWordsRaw = (data.lastWords || '').trim().replace(/[.。]$/, '');
+  const lastWords = lastWordsRaw ? trEn(lastWordsRaw) : '', lastWordsJa = lastWordsRaw ? trJa(lastWordsRaw) : '';
+  const toRaw = (data.legacyTo || '').trim(), whatRaw = (data.legacyWhat || '').trim();
+  const legacy = toRaw || whatRaw ? {
+    toEn: toRaw ? trEn(toRaw) : '', toJa: toRaw ? trJa(toRaw).replace(/に$/, '') : '',
+    whatEn: whatRaw ? trEn(whatRaw) : '', whatJa: whatRaw ? trJa(whatRaw).replace(/を$/, '') : '',
+  } : null;
+  const endOtherRaw = data.endOther.trim().replace(/[.。]$/, '');
+  const endOther = trEn(endOtherRaw), endOtherJa = trJa(endOtherRaw);
+  const sentence = (s) => (/[.!?。！？”」]$/.test(s) ? s : s + '.');
+
+  // Lead paragraph in encyclopedia style: life span, identity, character, values, death, anecdote.
+  const lead = [
+    `${name} (${over100 ? `born ${born}` : `${born} – ${deathYear}`}) was ${title}, born ${/^(at|in|on|by|under|inside|near|aboard)\s/i.test(birthplace) ? '' : 'in '}${birthplace}.`,
+    traits && `Throughout life, ${name} was known for being ${traits}.`,
+    mattered && `${name} cherished ${mattered}.`,
+    view && `On ${view.topicEn}, ${name} was ${view.stance === 'for' ? 'in favor' : 'against it'}${view.reasonEn ? `, citing ${view.reasonEn}` : ''}.`,
+    over100
+      ? `${name} lived past the age of 100${endParts.length ? ` and died ${endParts.join(', ')}` : ''}.`
+      : `${name} died in ${deathYear} at the age of ${data.lifespan}${endParts.length ? `, ${endParts.join(', ')}` : ''}.`,
+    endOther && `Of their last moments, it is said: “${endOther}.”`,
+    lastWords && `${name}'s last words are said to have been “${lastWords}.”`,
+    legacy && (legacy.whatEn && legacy.toEn ? `${name} left ${legacy.whatEn} to ${legacy.toEn}.` : legacy.whatEn ? `${name} left behind ${legacy.whatEn}.` : `${name} left something precious to ${legacy.toEn}.`),
+    anecdote && `One story about ${name} is still told: ${sentence(anecdote)}`,
+  ].filter(Boolean).join(' ');
+
+  const leadJa = [
+    `${nameJa}（${over100 ? `${born}年 -` : `${born}年 - ${deathYear}年`}）は、${birthplaceJa}${/で$/.test(birthplaceJa) ? '生まれた' : '出身の'}${titleJa}。`,
+    traitsJaText && `生涯を通じて、${traitsJaText}人物として知られた。`,
+    matteredJa && `${matteredJa}を大切にしていた。`,
+    view && `${view.topicJa}については、${view.reasonJa ? `${view.reasonJa}という理由から、` : ''}${view.stance === 'for' ? '賛成' : '反対'}の立場を取っていた。`,
+    over100
+      ? `100歳を超えて生き、${endPartsJa.join('、')}この世を去った。`
+      : `${deathYear}年、${endPartsJa.join('、')}この世を去った。享年${data.lifespan}歳。`,
+    endOtherJa && `その最期は「${endOtherJa}」であったという。`,
+    lastWordsJa && `最期の言葉は「${lastWordsJa}」だったと伝えられている。`,
+    legacy && (legacy.whatJa && legacy.toJa ? `${legacy.toJa}に${legacy.whatJa}を遺した。` : legacy.whatJa ? `${legacy.whatJa}を遺した。` : `${legacy.toJa}に大切なものを遺した。`),
+    anecdoteJa && `「${anecdoteJa}」という逸話が残っている。`,
+  ].filter(Boolean).join('');
+
+  return {
+    name, nameJa, title, titleJa, birthplace, birthplaceJa, lead, leadJa,
+    traits: traits || '—',
+    born,
+    died: over100 ? `after ${data.birthYear ? Number(data.birthYear) + 100 : '20XX'}` : String(deathYear),
+    age: over100 ? '100 or older' : String(data.lifespan),
+    share: `${lead}\n\n${leadJa}`,
+  };
+}
+
+// The line an encyclopedia prints at the foot of an entry.
+const lastEdited = () => [
+  `This entry was last edited on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}.`,
+  `この記事の最終更新：${new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+];
+
+const NOTE = ['This game is fiction.', 'このゲームはフィクションです。'];
+
+/* ---------- saved card: 1080×1920 PNG drawn on canvas ---------- */
+
+// Japanese line-breaking rules (kinsoku): these never start a line, and these never end one.
+const NO_LINE_START = '、。，．・：；？！ー～…‥」』）〕］｝〉》】ぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ々゛゜,.:;?!)]}”’%';
+const NO_LINE_END = '「『（〔［｛〈《【“‘([{';
+
+// Splits text into pieces that must stay together: an English word or number with its trailing space, or a
+// single Japanese character; closing marks join the piece before them and opening marks the piece after.
+function breakUnits(text) {
+  const raw = text.match(/[A-Za-z0-9À-ÿ'’\-–.,:;!?%&/]+\s*|\s+|./gu) || [];
+  const units = [];
+  let pendingOpen = '';
+  for (const piece of raw) {
+    if (piece.length === 1 && NO_LINE_END.includes(piece)) { pendingOpen += piece; continue; }
+    if (units.length && !pendingOpen && piece.length === 1 && NO_LINE_START.includes(piece)) { units[units.length - 1] += piece; continue; }
+    units.push(pendingOpen + piece);
+    pendingOpen = '';
+  }
+  if (pendingOpen) units.push(pendingOpen);
+  return units;
+}
+
+// widthOf(i) gives the allowed width of line i, so a drop cap can indent the first lines.
+// A closing mark that would start a new line is hung at the end of the line instead (burasage).
+function wrapLines(ctx, text, widthOf) {
+  const maxFor = typeof widthOf === 'function' ? widthOf : () => widthOf;
+  const lines = [];
+  let line = '';
+  const push = (t) => {
+    if (!line || ctx.measureText((line + t).trimEnd()).width <= maxFor(lines.length)) { line += t; return; }
+    lines.push(line.trimEnd());
+    line = t.trimStart();
+  };
+  for (const unit of breakUnits(text)) {
+    if (ctx.measureText(unit.trimEnd()).width <= maxFor(lines.length)) { push(unit); continue; }
+    for (const ch of unit) push(ch); // a single piece wider than the line breaks by character
+  }
+  if (line.trim()) lines.push(line.trimEnd());
+  // A line that would begin with a closing mark gives it back to the line before.
+  for (let i = 1; i < lines.length; i += 1) {
+    while (lines[i] && NO_LINE_START.includes(lines[i][0])) { lines[i - 1] += lines[i][0]; lines[i] = lines[i].slice(1); }
+  }
+  return lines.filter((l) => l.length);
+}
+
+// Where the portrait sits on the 1080×1920 card; the live card lays its moving portrait over exactly this spot.
+const CARD_PORTRAIT = { x: 690, y: 290, size: 220, radius: 8 };
+
+// The card looks like a page of study notes: a loose-leaf grid page on a desk, washi tape, index flags,
+// a taped-in photo, a highlighted name and boxed notes. Every colour comes from the avatar's fur colour.
+// The portrait's place on the card can move with the length of the name; each finished card records where it went.
+let lastCardLayout = null;
+const CARD_LAYOUTS = new Map(); // card image URL → portrait rect
+
+async function renderCardPng(data) {
+  const e = entryOf(data);
+  const W = 1080, H = 1920, CX = W / 2;
+  const colorEntry = Number.isInteger(data.avatar) ? AV_COLORS[3] : pick(AV_COLORS, (data.avatar || {}).color);
+  const base = colorEntry.fill;
+  const tint = (t) => mixHex(base, '#ffffff', t);
+  const C = {
+    desk: mixHex(base, '#f6f4f0', 0.86), deskLow: mixHex(base, '#efece6', 0.8),
+    page: '#fffefb', grid: mixHex(base, '#ffffff', 0.78), ink: '#2f2e3c', body: '#45445a', sub: '#6a6979', faint: '#94939f',
+    pale: tint(0.86), light: tint(0.68), mid: tint(0.42), deep: mixHex(base, '#2f2e3c', 0.42),
+  };
+  const round = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Zen Kaku Gothic New", "Noto Sans CJK JP", sans-serif';
+  const gothic = '"Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", "Noto Sans CJK JP", sans-serif';
+  const hand = '"Caveat", "Zen Maru Gothic", cursive';
+  const formal = '"Shippori Mincho", "Hiragino Mincho ProN", "Noto Serif CJK JP", serif'; // the yourwiki name: a proper, bookish serif
+  const bubble = '"Cherry Bomb One", "Zen Maru Gothic", sans-serif'; // the person\'s name: fat, rounded letters that overlap
+  const botan = '"Amatic SC", "Zen Maru Gothic", cursive'; // small labels: thin, hand-drawn capitals
+  const mono = '"DM Mono", ui-monospace, Menlo, monospace';
+  const allText = Object.values(e).join('') + 'yourwiki DATE English 日本語 FICTIONAL ENTRY 架空の記事 享年歳 Everything here is a setting chosen in a game. ここに書かれていることは、すべてゲームで選んだ設定です。' + colorEntry.label.join('');
+  try {
+    await Promise.all([
+      document.fonts.load(`700 88px "Zen Maru Gothic"`, allText),
+      document.fonts.load(`500 30px "Zen Maru Gothic"`, allText),
+      document.fonts.load(`400 28px "Zen Kaku Gothic New"`, allText),
+      document.fonts.load(`600 40px "Caveat"`, allText),
+      document.fonts.load(`700 90px "Caveat"`, allText),
+      document.fonts.load(`400 90px "Cherry Bomb One"`, allText),
+      document.fonts.load(`700 40px "Amatic SC"`, allText),
+      document.fonts.load(`700 40px "Shippori Mincho"`, 'yourwiki'),
+      document.fonts.load(`400 30px "DM Mono"`, '0123456789–.DATE'),
+      document.fonts.load(`700 60px "Dancing Script"`, 'W'),
+    ]);
+  } catch { /* falls back to system faces */ }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'alphabetic';
+  const rand = seededRandom(`${e.name}|${base}`);
+  const spaced = (px) => { if ('letterSpacing' in ctx) ctx.letterSpacing = px; };
+  const text = (t, x, y, align = 'left') => { ctx.textAlign = align; ctx.fillText(t, x, y); ctx.textAlign = 'left'; };
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+  const shadow = (blur, dy, a) => { ctx.shadowColor = `rgba(47,46,60,${a})`; ctx.shadowBlur = blur; ctx.shadowOffsetY = dy; };
+  const fitFont = (t, weight, size, family, maxW, min) => { let s = size; for (;;) { ctx.font = `${weight} ${s}px ${family}`; if (ctx.measureText(t).width <= maxW || s <= min) return s; s -= 2; } };
+  // A strip of washi tape: translucent, with torn (zigzag) ends and a pattern of dots or stripes.
+  const tape = (cx, cy, w, h, angle, color, pattern) => {
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle * Math.PI / 180);
+    ctx.beginPath();
+    const teeth = 7;
+    ctx.moveTo(-w / 2, -h / 2);
+    ctx.lineTo(w / 2, -h / 2);
+    for (let i = 1; i <= teeth; i += 1) ctx.lineTo(w / 2 + (i % 2 ? 5 : 0), -h / 2 + (h * i) / teeth);
+    ctx.lineTo(-w / 2, h / 2);
+    for (let i = teeth - 1; i >= 0; i -= 1) ctx.lineTo(-w / 2 + (i % 2 ? -5 : 0), -h / 2 + (h * i) / teeth);
+    ctx.closePath();
+    ctx.globalAlpha = 0.82; ctx.fillStyle = color; ctx.fill();
+    ctx.clip();
+    ctx.globalAlpha = 0.5; ctx.fillStyle = '#ffffff';
+    if (pattern === 'dots') for (let x = -w / 2 + 12; x < w / 2; x += 22) for (let y = -h / 2 + 12; y < h / 2; y += 20) { ctx.beginPath(); ctx.arc(x + ((y / 20) % 2 ? 11 : 0), y, 3.2, 0, Math.PI * 2); ctx.fill(); }
+    else for (let x = -w / 2 - h; x < w / 2; x += 26) { ctx.beginPath(); ctx.moveTo(x, h / 2); ctx.lineTo(x + h, -h / 2); ctx.lineTo(x + h + 10, -h / 2); ctx.lineTo(x + 10, h / 2); ctx.fill(); }
+    ctx.restore();
+  };
+  // a four-pointed sparkle with curved sides (✦), plus a tiny one beside it
+  const sparkle = (x, y, r, color) => {
+    const one = (cx, cy, rr) => { ctx.beginPath(); ctx.moveTo(cx, cy - rr); ctx.quadraticCurveTo(cx, cy, cx + rr, cy); ctx.quadraticCurveTo(cx, cy, cx, cy + rr); ctx.quadraticCurveTo(cx, cy, cx - rr, cy); ctx.quadraticCurveTo(cx, cy, cx, cy - rr); ctx.fill(); };
+    ctx.fillStyle = color; one(x, y, r); one(x + r * 0.95, y - r * 0.85, r * 0.42);
+  };
+  const star = (x, y, r, color) => { ctx.fillStyle = color; ctx.beginPath(); for (let i = 0; i < 10; i += 1) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rad = i % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rad, y + Math.sin(a) * rad); } ctx.closePath(); ctx.fill(); };
+
+  // desk
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, C.desk); g.addColorStop(1, C.deskLow);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // index flags peeking out from behind the page's right edge
+  const PX0 = 70, PY0 = 120, PW = 920, PH = 1740;
+  [[300, C.light], [400, C.mid], [500, C.pale]].forEach(([fy, col]) => {
+    ctx.save(); shadow(10, 3, 0.12); ctx.fillStyle = col; rr(PX0 + PW - 40, fy, 104, 82, 14); ctx.fill(); ctx.restore();
+  });
+
+  // the loose-leaf page: grid, binder holes, soft shadow
+  ctx.save(); shadow(40, 16, 0.16); ctx.fillStyle = C.page; rr(PX0, PY0, PW, PH, 22); ctx.fill(); ctx.restore();
+  ctx.save(); rr(PX0, PY0, PW, PH, 22); ctx.clip();
+  ctx.strokeStyle = C.grid; ctx.lineWidth = 1.4;
+  for (let x = PX0 + 90; x < PX0 + PW; x += 34) { ctx.beginPath(); ctx.moveTo(x, PY0); ctx.lineTo(x, PY0 + PH); ctx.stroke(); }
+  for (let y = PY0 + 20; y < PY0 + PH; y += 34) { ctx.beginPath(); ctx.moveTo(PX0 + 90, y); ctx.lineTo(PX0 + PW, y); ctx.stroke(); }
+  ctx.fillStyle = C.page; ctx.fillRect(PX0, PY0, 70, PH);
+  ctx.strokeStyle = C.mid; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(PX0 + 90, PY0); ctx.lineTo(PX0 + 90, PY0 + PH); ctx.stroke();
+  for (let y = PY0 + 70; y < PY0 + PH - 40; y += 74) {
+    ctx.fillStyle = C.desk; ctx.beginPath(); ctx.arc(PX0 + 40, y, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(47,46,60,.12)'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  ctx.restore();
+
+  // washi tape holding the page down
+  tape(PX0 + 70, PY0 + 6, 230, 58, -32, C.light, 'dots');
+  tape(PX0 + PW - 70, PY0 + PH - 10, 230, 58, -32, C.mid, 'stripes');
+
+  const X = PX0 + 130, CW = PW - 190, RIGHT = X + CW;
+
+  // page header: the yourwiki mark on the left, the colour label on the right
+  ctx.fillStyle = C.deep; ctx.font = `700 54px "Dancing Script", cursive`; text('W', X, PY0 + 112);
+  ctx.fillStyle = C.ink; ctx.font = `700 40px ${formal}`; text('yourwiki', X + 68, PY0 + 106);
+  const pill = `${AV_COLORS.indexOf(colorEntry) + 1}. ${colorEntry.label[0].toLowerCase()}`;
+  ctx.font = `700 40px ${botan}`;
+  const pw = ctx.measureText(pill).width + 44;
+  ctx.fillStyle = C.light; rr(RIGHT - pw, PY0 + 66, pw, 52, 26); ctx.fill();
+  ctx.fillStyle = C.deep; text(pill, RIGHT - pw / 2, PY0 + 106, 'center');
+  sparkle(RIGHT - pw - 26, PY0 + 94, 15, C.mid);
+  ctx.fillStyle = C.mid; ctx.fillRect(X, PY0 + 140, CW, 2);
+  // the name in fat bubble letters that overlap a little, each with a white outline (measured first, drawn below)
+  const P = CARD_PORTRAIT.size, PX = CARD_PORTRAIT.x;
+  const LW = PX - 40 - X;
+  const OVERLAP = 0.13; // how far each letter tucks under the next, as a share of the font size
+  const chars = (t) => [...t];
+  const bubbleWidth = (t, size) => {
+    ctx.font = `400 ${size}px ${bubble}`;
+    const cs = chars(t);
+    return cs.reduce((w, ch, i) => w + ctx.measureText(ch).width - (i && ch !== ' ' && cs[i - 1] !== ' ' ? size * OVERLAP : 0), 0);
+  };
+  const bubbleLines = (t, size) => {
+    const words = t.split(/\s+/).filter(Boolean);
+    const lines = [];
+    words.forEach((w) => { const cur = lines[lines.length - 1]; if (cur && bubbleWidth(`${cur} ${w}`, size) <= LW) lines[lines.length - 1] = `${cur} ${w}`; else lines.push(w); });
+    return lines;
+  };
+  let nameSize = 96;
+  while (nameSize > 72 && bubbleWidth(e.name, nameSize) > LW) nameSize -= 2;
+  let nameLines = [e.name];
+  if (bubbleWidth(e.name, nameSize) > LW) {
+    for (nameSize = 80; nameSize > 44; nameSize -= 2) { nameLines = bubbleLines(e.name, nameSize); if (nameLines.length <= 2 && nameLines.every((l) => bubbleWidth(l, nameSize) <= LW)) break; }
+  }
+  nameLines = nameLines.slice(0, 2);
+  const hasJa = Boolean(e.nameJa && e.nameJa !== e.name);
+
+  // The text block (name, Japanese name, dates) and the photo sit side by side with their bottoms level,
+  // so the English box starts right under whichever is taller.
+  const textHeight = nameSize * 0.82 + (nameLines.length - 1) * nameSize * 1.02 + (hasJa ? 50 : 0) + 66 + 14;
+  const photoHeight = P + 74;
+  const blockTop = PY0 + 164;
+  const blockBottom = blockTop + Math.max(textHeight, photoHeight);
+  const PY = blockBottom - photoHeight + 16;
+  lastCardLayout = { x: PX, y: PY, size: P, radius: CARD_PORTRAIT.radius };
+
+  // the photo: a small white-bordered print taped to the top right; the text is the main thing on this page
+  ctx.save(); shadow(22, 8, 0.18); ctx.fillStyle = '#ffffff'; rr(PX - 16, PY - 16, P + 32, P + 74, 8); ctx.fill(); ctx.restore();
+  const portrait = new Image();
+  portrait.src = avatarUrl(data.avatar);
+  await portrait.decode();
+  ctx.save(); rr(PX, PY, P, P, CARD_PORTRAIT.radius); ctx.clip(); ctx.drawImage(portrait, PX, PY, P, P); ctx.restore();
+  ctx.fillStyle = C.sub; ctx.font = `700 40px ${botan}`; text('fictional entry', PX + P / 2, PY + P + 46, 'center');
+  tape(PX + P / 2, PY - 16, 150, 42, -5, C.pale, 'stripes');
+  sparkle(PX - 36, PY + P + 26, 20, C.mid); sparkle(PX + P + 6, PY + P + 62, 15, C.light);
+
+  const nameFill = mixHex(base, '#2f2e3c', colorEntry.dark ? 0.05 : 0.3);
+  let y = blockBottom - textHeight + nameSize * 0.82;
+  nameLines.forEach((line) => {
+    ctx.font = `400 ${nameSize}px ${bubble}`;
+    ctx.lineJoin = 'round';
+    let x = X;
+    chars(line).forEach((ch, i, cs) => {
+      if (i && ch !== ' ' && cs[i - 1] !== ' ') x -= nameSize * OVERLAP;
+      ctx.fillStyle = 'rgba(47,46,60,.16)'; ctx.fillText(ch, x + 3, y + 5);
+      ctx.strokeStyle = C.page; ctx.lineWidth = nameSize * 0.07; ctx.strokeText(ch, x, y);
+      ctx.fillStyle = nameFill; ctx.fillText(ch, x, y);
+      x += ctx.measureText(ch).width;
+    });
+    y += nameSize * 1.02;
+  });
+  y -= nameSize * 1.02;
+  if (hasJa) { y += 50; ctx.fillStyle = C.sub; ctx.font = `500 34px ${round}`; text(e.nameJa, X, y); }
+  y += 66;
+  const dates = `${e.born} – ${e.died}`;
+  const ageTag = e.age === '100 or older' ? '100歳以上' : `享年${e.age}歳`;
+  ctx.font = `500 28px ${mono}`; const dw = ctx.measureText(dates).width + 40;
+  ctx.font = `700 25px ${round}`; const aw = ctx.measureText(ageTag).width + 40;
+  ctx.fillStyle = '#ffffff'; ctx.strokeStyle = C.mid; ctx.lineWidth = 2; rr(X, y - 36, dw, 50, 25); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = C.deep; ctx.font = `500 28px ${mono}`; text(dates, X + dw / 2, y - 1, 'center');
+  ctx.fillStyle = C.light; rr(X + dw + 12, y - 36, aw, 50, 25); ctx.fill();
+  ctx.fillStyle = C.deep; ctx.font = `700 25px ${round}`; text(ageTag, X + dw + 12 + aw / 2, y - 2, 'center');
+  y = blockBottom;
+
+  // two note boxes, English and Japanese, each with a coloured title tab; text shrinks together until both fit
+  y += 44;
+  const BOTTOM = PY0 + PH - 210;
+  const pad = 30, TAB = 46, GAP = 30;
+  let en = 34, ja = 29, enLines, jaLines, hEn, hJa;
+  for (;;) {
+    ctx.font = `400 ${en}px ${gothic}`; enLines = wrapLines(ctx, e.lead, CW - pad * 2);
+    ctx.font = `400 ${ja}px ${gothic}`; jaLines = wrapLines(ctx, e.leadJa, CW - pad * 2);
+    hEn = TAB + pad * 0.8 + enLines.length * en * 1.6 + pad * 0.6;
+    hJa = TAB + pad * 0.8 + jaLines.length * ja * 1.75 + pad * 0.6;
+    if (y + hEn + GAP + hJa <= BOTTOM || en <= 17) break;
+    en -= 1; ja = Math.max(15, ja - 1);
+  }
+  const box = (top, h, label, lines, size, lh, color) => {
+    ctx.save(); shadow(14, 4, 0.08); ctx.fillStyle = '#ffffff'; rr(X, top, CW, h, 18); ctx.fill(); ctx.restore();
+    ctx.strokeStyle = C.mid; ctx.lineWidth = 2; rr(X, top, CW, h, 18); ctx.stroke();
+    ctx.save(); rr(X, top, CW, h, 18); ctx.clip(); ctx.fillStyle = C.pale; ctx.fillRect(X, top, CW, TAB); ctx.restore();
+    ctx.fillStyle = C.mid; ctx.fillRect(X, top + TAB, CW, 2);
+    ctx.fillStyle = C.deep; ctx.font = `700 38px ${botan}`; text(label, X + pad, top + 36);
+    [0, 1, 2].forEach((i) => { ctx.fillStyle = [C.light, C.mid, C.deep][i]; ctx.beginPath(); ctx.arc(X + CW - pad - i * 22, top + TAB / 2, 6, 0, Math.PI * 2); ctx.fill(); });
+    let ty = top + TAB + pad * 0.8 + size;
+    ctx.fillStyle = color; ctx.font = `400 ${size}px ${gothic}`;
+    lines.forEach((l) => { text(l, X + pad, ty); ty += size * lh; });
+  };
+  box(y, hEn, '✎ English', enLines, en, 1.6, C.body);
+  box(y + hEn + GAP, hJa, '✎ 日本語', jaLines, ja, 1.75, C.body);
+
+  // footer: a dashed rule, the note, and the mark again
+  const FY = PY0 + PH - 70;
+  ctx.strokeStyle = C.mid; ctx.lineWidth = 2; ctx.setLineDash([10, 9]); ctx.beginPath(); ctx.moveTo(X, FY - 112); ctx.lineTo(RIGHT, FY - 112); ctx.stroke(); ctx.setLineDash([]);
+  const [editedEn, editedJa] = lastEdited();
+  ctx.fillStyle = C.sub; ctx.font = `400 21px ${gothic}`;
+  text(editedEn, X, FY - 72);
+  text(editedJa, X, FY - 44);
+  ctx.fillStyle = C.faint; ctx.font = `400 19px ${gothic}`;
+  text('This article is a work of fiction.', X, FY - 8);
+  text('この記事はフィクションです。', X, FY + 20);
+  ctx.fillStyle = C.ink; ctx.font = `700 32px ${formal}`; text('yourwiki', RIGHT, FY + 8, 'right');
+  const ww = ctx.measureText('yourwiki').width;
+  ctx.fillStyle = C.deep; ctx.font = `700 40px "Dancing Script", cursive`; text('W', RIGHT - ww - 14, FY + 12, 'right');
+
+  const url = canvas.toDataURL('image/png');
+  CARD_LAYOUTS.set(url, lastCardLayout || CARD_PORTRAIT);
+  return url;
+}
+
+/* ---------- small pieces ---------- */
+
+const NavContext = createContext(() => {});
+
+function Link({ to, className, onClick, children, ...rest }) {
+  const go = useContext(NavContext);
+  return html`<a href="#" className=${className} ...${rest} onClick=${(event) => {
+    event.preventDefault();
+    if (onClick) onClick(event);
+    go(to);
+  }}>${children}</a>`;
+}
+
+// English line with its Japanese line underneath.
+function Bi({ pair, jaClass = '' }) {
+  return html`${pair[0]}<span className=${`ja ${jaClass}`} lang="ja">${pair[1]}</span>`;
+}
+
+/* ---------- shell ---------- */
+
+function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  return html`
+    <header className="relative z-20 mx-auto flex w-full max-w-6xl items-center justify-between border-b border-rule px-5 py-3 md:px-8 md:py-4">
+      <${Link} to="landing" className="flex min-h-11 items-center gap-3">
+        <span className="logo-mark" aria-hidden="true">W</span>
+        <span className="font-serif text-xl font-bold tracking-wide text-ink">yourwiki</span>
+      <//>
+      <nav className="hidden items-center gap-6 md:flex" aria-label="Main">
+        <${Link} to="about" className="flex min-h-11 items-center text-[15px] font-bold text-sub hover:text-ink">About<//>
+        <${Link} to="play" className="btn">Start <${ArrowRight} size=${16} /><//>
+      </nav>
+      <button className="btn-quiet menu-toggle" onClick=${() => setMenuOpen(!menuOpen)} aria-label="Open menu" aria-expanded=${menuOpen}>
+        ${menuOpen ? html`<${X} size=${20} />` : html`<${Menu} size=${20} />`}
+      </button>
+      ${menuOpen && html`
+        <div className="sheet absolute right-5 top-[4rem] flex w-52 flex-col gap-1 p-2 shadow-lg md:hidden">
+          <${Link} to="about" className="flex min-h-11 items-center rounded px-4 text-base font-bold text-ink hover:bg-[#f4f4f6]" onClick=${() => setMenuOpen(false)}>About<//>
+          <${Link} to="play" className="flex min-h-11 items-center rounded bg-mint px-4 text-base font-bold text-ink" onClick=${() => setMenuOpen(false)}>Start<//>
+        </div>`}
+    </header>`;
+}
+
+function PageShell({ children, theme }) {
+  // the page behind the shell (seen when scrolling past the ends) follows the shell's colour
+  useEffect(() => {
+    document.documentElement.style.background = theme === 'dark' ? '#383840' : '';
+    return () => { document.documentElement.style.background = ''; };
+  }, [theme]);
+  return html`
+    <div className=${`wiki-shell ${theme === 'dark' ? 'theme-dark' : ''}`}>
+      <${Header} />
+      ${children}
+      <footer className="mx-auto max-w-6xl px-5 pb-8 pt-16 md:px-8">
+        <div className="border-t border-rule pt-5 text-[13px] text-faint">yourwiki</div>
+      </footer>
+    </div>`;
+}
+
+/* ---------- pages ---------- */
+
+function SampleEntry() {
+  const entry = entryOf(SAMPLE);
+  return html`
+    <div className="sheet p-6 md:p-7">
+      <p className="label flex items-center gap-2"><span className="inline-block h-2 w-2 rounded-full bg-mint-ink"></span>Example entry <span lang="ja" className="font-normal">記入例</span></p>
+      <div className="mt-3 flex items-end justify-between gap-4 border-b-2 border-ink pb-3">
+        <h2 className="display min-w-0 text-3xl leading-tight text-ink">${entry.name}</h2>
+        <img src=${avatarUrl(SAMPLE.avatar, true, 'sample')} alt=${`Portrait of ${entry.name}`} className="h-20 w-20 shrink-0 rounded-md" />
+      </div>
+      <p className="mt-4 text-[15px] leading-7 text-body"><strong className="font-bold text-ink">${entry.name}</strong>${entry.lead.slice(entry.name.length)}</p>
+      <p className="ja mt-3 !leading-7" lang="ja"><strong className="font-bold text-ink">${entry.nameJa}</strong>${entry.leadJa.slice(entry.nameJa.length)}</p>
+    </div>`;
+}
+
+function Landing() {
+  return html`
+    <${PageShell}>
+      <main>
+        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pb-20 pt-10 md:grid-cols-[1.05fr_.95fr] md:px-8 md:pb-28 md:pt-16">
+          <div className="rise-in">
+            <h1 className="display max-w-[16ch] text-4xl leading-[1.2] text-ink md:text-6xl">
+              <${Bi} pair=${['What would your encyclopedia entry say?', 'もしあなたが百科事典に載るなら？']} jaClass="ja-lg mt-3" />
+            </h1>
+            <p className="display mt-6 text-xl leading-snug text-sub md:text-2xl">No sontaku about your life.<span lang="ja" className="mt-1 block text-base md:text-lg">人生に、忖度はいりません。</span></p>
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <${Link} to="play" className="btn">Start <${ArrowRight} size=${18} /><//>
+              <${Link} to="about" className="btn-quiet">About this app<//>
+            </div>
+            <p className="mt-10 text-sm text-faint"><${Bi} pair=${['About 5 minutes. There are no right answers.', '所要時間は約5分。正解はありません。']} /></p>
+            <p className="mt-3 text-sm text-faint"><${Bi} pair=${['You can answer in English or Japanese.', '入力は英語でも日本語でも構いません。']} /></p>
+          </div>
+
+          <div className="mx-auto w-full max-w-[360px]">
+            <p className="label mb-3 text-center"><${Bi} pair=${['Example entry', '記入例']} /></p>
+            <${LiveCard} data=${SAMPLE} spot="home-card" />
+          </div>
+        </section>
+      </main>
+    <//>`;
+}
+
+function Ornament() {
+  return html`
+    <div className="my-14 flex items-center justify-center gap-4" aria-hidden="true">
+      <span className="h-px w-24 bg-mint-ink md:w-40"></span>
+      <span className="h-2.5 w-2.5 rotate-45 bg-mint-ink"></span>
+      <span className="h-px w-24 bg-mint-ink md:w-40"></span>
+    </div>`;
+}
+
+function About() {
+  // The sample entry's card (LiveCard below), shown as the thing you would hand to your family.
+
+  return html`
+    <${PageShell} theme="dark">
+      <main className="mx-auto max-w-5xl px-5 pb-20 pt-10 md:px-8 md:pb-28 md:pt-16">
+        <p className="label text-mint-ink">About this app <span lang="ja" className="ml-1 font-normal">このアプリについて</span></p>
+
+        <blockquote className="rise-in mt-8 max-w-4xl border-l-4 border-mint pl-6 md:pl-10">
+          <p className="display text-3xl leading-[1.35] text-ink md:text-5xl md:leading-[1.3]">
+            We rarely talk about how we want our lives to end. <span className="text-mint-ink">Instead, we guess what each other wants.</span>
+          </p>
+          <p className="ja ja-lg mt-5 !text-base !leading-8" lang="ja">人生の終わり方について、私たちはあまり話しません。その代わりに、お互いの気持ちを忖度し合っています。</p>
+        </blockquote>
+
+        <${Ornament} />
+
+        <section className="grid items-center gap-10 md:grid-cols-[minmax(0,1fr)_15rem] md:gap-16">
+          <div className="min-w-0">
+            <p className="text-lg leading-[1.9] text-body md:text-xl">
+              Thinking about death starts with stepping back and asking how you want to live. That is why yourwiki turns your life into an encyclopedia entry. And because it reads like an article, it is easy to share with your family and the people you care about.
+            </p>
+            <p className="ja ja-lg mt-4 !leading-8" lang="ja">自分の死について考えることは、どう生きたいかを少し離れて見つめることから始まります。だからyourwikiでは、あなたの人生を百科事典の一項目として書きます。記事の形なので、家族や大切な人にもそのまま見せることができます。</p>
+            <${Link} to="play" className="btn mt-9">Start <${ArrowRight} size=${18} /><//>
+          </div>
+          <figure className="mx-auto w-52 md:w-full">
+            <${LiveCard} data=${SAMPLE} spot="about-card" />
+          </figure>
+        </section>
+
+        <div className="mt-16 grid gap-5 md:grid-cols-2">
+          <div className="sheet flex flex-col p-6 md:p-8">
+            <h2 className="display text-2xl text-ink"><${Bi} pair=${['Your answers change with you', '答えは、あなたと一緒に変わる']} jaClass="mt-1" /></h2>
+            <p className="mt-4 text-base leading-7 text-body"><${Bi} pair=${['yourwiki is not a one-time question. Your answers change as your life does, so come back and rewrite your entry from time to time. Like an encyclopedia, every entry shows the date it was last edited, so you can see when your thinking changed.', 'yourwikiは一度きりの診断ではありません。生き方が変われば、答えも変わります。ときどき戻ってきて、記事を書き直してください。百科事典と同じように、記事には最終更新日が入るので、いつ考えが変わったのかが分かります。']} jaClass="mt-2" /></p>
+            <p className="mt-auto pt-6"><span className="inline-flex items-center gap-2 rounded border border-mint bg-mint-soft px-3 py-2 text-sm text-ink"><span className="inline-block h-2 w-2 rounded-full bg-mint-ink"></span>Last edited <span className="num">${new Date().toISOString().slice(0, 10)}</span></span></p>
+          </div>
+          <div className="sheet p-6 md:p-8">
+            <h2 className="display text-2xl text-ink"><${Bi} pair=${['This is not a test', 'これは診断ではありません']} jaClass="mt-1" /></h2>
+            <p className="mt-4 text-base leading-7 text-body"><${Bi} pair=${['Nothing here decides what kind of person you are. Turning your answers into an article helps draw out what you really think.', 'あなたがどんな人なのかを、このアプリが決めることはありません。記事に落とし込むことで、あなたの考えを引き出します。']} jaClass="mt-2" /></p>
+          </div>
+        </div>
+      </main>
+    <//>`;
+}
+
+function Progress({ step }) {
+  return html`
+    <div className="flex items-center gap-3" aria-label=${`Question ${step + 1} of 9`}>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#e2ebe8]"><div className="h-full rounded-full bg-mint-ink transition-all duration-300" style=${{ width: `${((step + 1) / 9) * 100}%` }}></div></div>
+      <span className="num text-sm text-sub">${String(step + 1).padStart(2, '0')} / 09</span>
+    </div>`;
+}
+
+function Chip({ pair, selected, onClick }) {
+  return html`
+    <button type="button" aria-pressed=${selected} className=${`choice-chip ${selected ? 'selected' : ''}`} onClick=${onClick}>
+      ${selected && html`<${Check} size=${16} className="shrink-0" />`}
+      <span><span className="en">${pair[0]}</span><span className="ja" lang="ja">${pair[1]}</span></span>
+    </button>`;
+}
+
+// With otherId, a small text box under the chips lets the answer be written freely; typing replaces the chosen chip.
+function ChoiceGroup({ label, options, value, onChange, otherId, example = 'Or write your own　自分で書く' }) {
+  const typed = options.some(([en]) => en === value) ? '' : value;
+  return html`
+    <div>
+      <p className="label mb-3"><${Bi} pair=${label} /></p>
+      <div className="flex flex-wrap gap-2">${options.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${value === pair[0]} onClick=${() => onChange(value === pair[0] ? '' : pair[0])} />`)}</div>
+      ${otherId && html`<input id=${otherId} aria-label=${`${label[0]}: your own words`} className="input-paper mt-3 !py-2 !text-base" value=${typed} onChange=${(e) => onChange(e.target.value)} placeholder=${example} />`}
+    </div>`;
+}
+
+function FieldLabel({ htmlFor, pair, className = '' }) {
+  return html`<label htmlFor=${htmlFor} className=${`label block ${className}`}>${pair[0]} <span lang="ja" className="ml-1 font-normal">${pair[1]}</span></label>`;
+}
+
+const YEARS = Array.from({ length: 2030 - 1900 + 1 }, (_, i) => 1900 + i);
+const DEFAULT_YEAR = '2009';
+const ITEM_PX = 48; // matches .wheel-item height (3rem)
+
+// Scroll-to-choose year picker: the row in the mint band is the chosen year.
+function YearWheel({ value, onChange }) {
+  const listRef = useRef(null);
+  const timer = useRef(0);
+  const [index, setIndex] = useState(Math.max(0, YEARS.indexOf(Number(value || DEFAULT_YEAR))));
+
+  useEffect(() => {
+    if (!value) onChange(DEFAULT_YEAR);
+    listRef.current.scrollTop = index * ITEM_PX;
+  }, []);
+
+  const scrollToIndex = (i, smooth = true) => {
+    const clamped = Math.min(YEARS.length - 1, Math.max(0, i));
+    listRef.current.scrollTo({ top: clamped * ITEM_PX, behavior: smooth ? 'smooth' : 'auto' });
+  };
+  const onScroll = () => {
+    const i = Math.min(YEARS.length - 1, Math.max(0, Math.round(listRef.current.scrollTop / ITEM_PX)));
+    setIndex(i);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => onChange(String(YEARS[i])), 80);
+  };
+  const onKeyDown = (event) => {
+    if (event.key === 'ArrowUp') { event.preventDefault(); scrollToIndex(index - 1); }
+    if (event.key === 'ArrowDown') { event.preventDefault(); scrollToIndex(index + 1); }
+  };
+
+  return html`
+    <div className="flex items-center gap-3">
+      <div className="wheel w-full">
+        <div className="wheel-band"></div>
+        <div ref=${listRef} className="wheel-list" tabIndex="0" role="listbox" aria-label="Year of birth" aria-activedescendant=${`year-${YEARS[index]}`} onScroll=${onScroll} onKeyDown=${onKeyDown}>
+          ${YEARS.map((year, i) => html`
+            <div key=${year} id=${`year-${year}`} role="option" aria-selected=${i === index} className=${`wheel-item ${i === index ? 'on' : ''}`} onClick=${() => scrollToIndex(i)}>${year}</div>`)}
+        </div>
+        <div className="wheel-fade"></div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <button type="button" className="btn-quiet !w-11 !p-0" aria-label="Earlier year" onClick=${() => scrollToIndex(index - 1)}><${ChevronUp} size=${20} /></button>
+        <button type="button" className="btn-quiet !w-11 !p-0" aria-label="Later year" onClick=${() => scrollToIndex(index + 1)}><${ChevronDown} size=${20} /></button>
+      </div>
+    </div>`;
+}
+
+const AV_STEPS = [
+  { key: 'shape', label: ['Shape', 'かたち'], list: AV_SHAPES },
+  { key: 'color', label: ['Color', 'いろ'], list: AV_COLORS },
+  { key: 'face', label: ['Face', 'かお'], list: AV_FACES },
+  { key: 'acc', label: ['Extras', 'こもの'], list: AV_EXTRAS },
+];
+
+function AvatarPicker({ avatar, onChange }) {
+  const current = Number.isInteger(avatar) ? AV_DEFAULT : { ...AV_DEFAULT, ...(avatar || {}) };
+  const [tab, setTab] = useState(0);
+  const stepInfo = AV_STEPS[tab];
+  const set = (patch) => onChange({ ...current, ...patch });
+  // "Surprise me" in two flavours: each draws from its own set of shapes, colours, faces and extras.
+  const SURPRISE = {
+    girl: { shape: ['cloud', 'heart', 'bunny', 'cat', 'round'], color: ['pink', 'lavender', 'yellow', 'sky'], face: ['sparkle', 'happy', 'smile', 'sparkle'], acc: ['flower', 'crown', 'sprout', 'none'] },
+    boy: { shape: ['round', 'triangle', 'bear', 'poop', 'cloud'], color: ['navy', 'charcoal', 'sky', 'sage', 'brown'], face: ['smile', 'cool', 'shades', 'money', 'wow'], acc: ['cap', 'tophat', 'headphones', 'glasses', 'none'] },
+  };
+  const shuffle = (style) => {
+    const r = (list) => list[Math.floor(Math.random() * list.length)];
+    const set = SURPRISE[style];
+    onChange({ shape: r(set.shape), color: r(set.color), face: r(set.face), acc: r(set.acc) });
+  };
+  const recipe = AV_STEPS.map((st) => pick(st.list, current[st.key]).label[1]).join(' → ');
+
+  return html`
+    <div className="mt-10 max-w-md">
+      <p className="label"><${Bi} pair=${['Make your portrait', '似顔絵をつくる']} /></p>
+      <div className="mt-3 flex items-center gap-4">
+        <img src=${avatarUrl(current, true, 'picker')} alt="Your portrait" className="h-28 w-28 shrink-0 rounded-lg border border-rule" />
+        <div className="min-w-0">
+          <p className="text-sm leading-6 text-body" lang="ja">${recipe}</p>
+          <p className="mt-2 text-xs text-faint">Surprise me <span lang="ja">おまかせ</span></p>
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button type="button" className="btn-quiet !px-3" onClick=${() => shuffle('girl')}>Cute <span lang="ja" className="ml-1 text-xs">かわいく</span></button>
+            <button type="button" className="btn-quiet !px-3" onClick=${() => shuffle('boy')}>Cool <span lang="ja" className="ml-1 text-xs">かっこよく</span></button>
+          </div>
+        </div>
+      </div>
+      <div className="mt-5 grid grid-cols-4 gap-1" role="tablist">
+        ${AV_STEPS.map((st, i) => html`
+          <button key=${st.key} type="button" role="tab" aria-selected=${tab === i} onClick=${() => setTab(i)}
+            className=${`rounded-md border px-1 py-2 text-center text-sm leading-tight ${tab === i ? 'border-mint-ink bg-mint-soft text-ink' : 'border-rule bg-white text-sub'}`}>
+            <span className="num text-xs text-mint-ink">${i + 1}</span><span className="block">${st.label[0]}</span><span className="block text-xs" lang="ja">${st.label[1]}</span>
+          </button>`)}
+      </div>
+      <div className="mt-3 grid grid-cols-4 gap-2">
+        ${stepInfo.key === 'color'
+          ? AV_COLORS.map((c) => html`
+              <button key=${c.id} type="button" aria-pressed=${current.color === c.id} title=${`${c.label[0]} ${c.label[1]}`}
+                className=${`avatar-option tile ${current.color === c.id ? 'selected' : ''}`} onClick=${() => set({ color: c.id })}>
+                <span className="block aspect-square w-full rounded-md" style=${{ background: c.fill }}></span>
+                <span className="block py-1 text-center text-xs leading-tight text-sub">${c.label[0]}<span className="block text-xs" lang="ja">${c.label[1]}</span></span>
+              </button>`)
+          : stepInfo.list.map((item) => {
+              const preview = { ...current, [stepInfo.key]: item.id };
+              const on = current[stepInfo.key] === item.id;
+              return html`
+                <button key=${item.id} type="button" aria-pressed=${on} title=${`${item.label[0]} ${item.label[1]}`}
+                  className=${`avatar-option tile ${on ? 'selected' : ''}`} onClick=${() => set({ [stepInfo.key]: item.id })}>
+                  <img src=${avatarUrl(preview)} alt="" />
+                  <span className="block py-1 text-center text-xs leading-tight text-sub">${item.label[0]}<span className="block text-xs" lang="ja">${item.label[1]}</span></span>
+                </button>`;
+            })}
+      </div>
+    </div>`;
+}
+
+function Counter({ value, max, note }) {
+  return html`<div className="mt-2 text-right text-[13px] text-faint"><span className="num">${value} / ${max}</span>${note ? `　${note}` : ''}</div>`;
+}
+
+function QuestionBody({ step, part = 0, data, update }) {
+  switch (step) {
+    case 0: return html`
+      <div>
+        <${FieldLabel} htmlFor="name" pair=${['Name', '名前']} />
+        <input autoFocus id="name" className="input-paper mt-2 !text-xl" value=${data.name} onChange=${(e) => update({ name: e.target.value })} placeholder="Type a name" />
+        <div className="mt-4 flex flex-wrap gap-2">${nameOptions.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${data.name === pair[0]} onClick=${() => update({ name: data.name === pair[0] ? '' : pair[0] })} />`)}</div>
+        <${AvatarPicker} avatar=${data.avatar} onChange=${(avatar) => update({ avatar })} />
+      </div>`;
+    case 1: return html`
+      <div>
+        <p className="label"><${Bi} pair=${['Year of birth', '生まれ年（西暦）']} /></p>
+        <div className="mt-3 max-w-xs">
+          <${YearWheel} value=${data.birthYear} onChange=${(year) => update({ birthYear: year })} />
+        </div>
+        <p className="mt-3 text-sm text-faint"><${Bi} pair=${['Scroll or tap to choose.', 'スクロールするか、タップして選んでください。']} /></p>
+      </div>`;
+    case 2: return html`
+      <div className="max-w-xl">
+        <div className="flex items-end justify-between">
+          <span className="text-ink"><span className="num text-5xl">${data.lifespan >= 100 ? '100+' : data.lifespan}</span><span className="ml-2 text-lg text-sub">years</span></span>
+        </div>
+        <input id="lifespan" type="range" min="20" max="100" value=${data.lifespan} onChange=${(e) => update({ lifespan: Number(e.target.value) })} className="slider mt-6" style=${{ '--slider-progress': `${((data.lifespan - 20) / 80) * 100}%` }} aria-label="How long do you live" />
+        <div className="mt-1 flex justify-between text-[13px] text-faint"><span className="num">20</span><span className="num">60</span><span className="num">100+</span></div>
+        <div className="mt-8 border-l-2 border-rule pl-4 text-base leading-7 text-body">
+          <${Bi} pair=${[`Choosing 100+ means you live past ${data.birthYear ? Number(data.birthYear) + 100 : 'your birth year + 100'}.`, `100+を選ぶと、${data.birthYear ? Number(data.birthYear) + 100 : '生まれ年＋100'}年以降まで生きた設定になります。`]} jaClass="mt-1" />
+        </div>
+      </div>`;
+    case 3: return part === 0
+      ? html`
+      <div>
+        <div className="flex flex-wrap gap-2">${placeShortcuts.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${data.birthplace === pair[0]} onClick=${() => update({ birthplace: data.birthplace === pair[0] ? '' : pair[0] })} />`)}</div>
+        <${FieldLabel} htmlFor="birthplace" pair=${['In your own words', '自分の言葉で']} className="mt-9" />
+        <input id="birthplace" className="input-paper mt-2" value=${isOption(placeShortcuts, data.birthplace) ? '' : data.birthplace} onChange=${(e) => update({ birthplace: e.target.value })} placeholder="e.g. New York City, in a stable　例：ニューヨーク、馬小屋で" />
+      </div>`
+      : html`
+      <div>
+        <div className="flex flex-wrap gap-2">${titleOptions.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${data.titles.includes(pair[0])} onClick=${() => update({ titles: data.titles.includes(pair[0]) ? [] : [pair[0]], titleOther: '' })} />`)}</div>
+        <${FieldLabel} htmlFor="titleOther" pair=${['In your own words', '自分の言葉で']} className="mt-9" />
+        <input id="titleOther" className="input-paper mt-2" value=${data.titleOther} onChange=${(e) => update({ titleOther: e.target.value, titles: [] })} placeholder="e.g. a shogun, a pastry chef　例：将軍、パティシエ" />
+      </div>`;
+    case 4: return html`
+      <div>
+        <div className="flex flex-wrap gap-2">${matteredOptions.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${(data.matters || []).includes(pair[0])} onClick=${() => update({ matters: toggleValue(data.matters || [], pair[0]) })} />`)}</div>
+        <${FieldLabel} htmlFor="mattered" pair=${['Or in your own words', 'または自分の言葉で']} className="mt-9" />
+        <textarea id="mattered" className="input-paper mt-2 min-h-28 resize-none leading-7" value=${data.mattered} onChange=${(e) => update({ mattered: e.target.value })} placeholder="e.g. making coffee every morning　例：毎朝コーヒーを淹れること" maxLength=${120}></textarea>
+        <${Counter} value=${data.mattered.length} max=${120} />
+      </div>`;
+    case 5: return html`
+      <div>
+        <${FieldLabel} htmlFor="anecdote" pair=${['Story (optional)', '逸話（任意）']} />
+        <textarea autoFocus id="anecdote" className="input-paper mt-2 min-h-36 resize-none leading-7" value=${data.anecdote} onChange=${(e) => update({ anecdote: e.target.value })} placeholder="e.g. always took the long way home on rainy days　例：雨の日はいつも遠回りして帰った" maxLength=${140}></textarea>
+        <${Counter} value=${data.anecdote.length} max=${140} note="optional" />
+      </div>`;
+    case 6: return html`
+      <div className="space-y-9">
+        <div>
+          <p className="label mb-3"><${Bi} pair=${['Topic', 'テーマ']} /></p>
+          <div className="flex flex-wrap gap-2">${viewTopicOptions.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${data.viewTopic === pair[0]} onClick=${() => update({ viewTopic: data.viewTopic === pair[0] ? '' : pair[0], viewTopicOther: '' })} />`)}</div>
+          <input id="viewTopicOther" aria-label="Another topic" className="input-paper mt-3 !py-2 !text-base" value=${data.viewTopicOther} onChange=${(e) => update({ viewTopicOther: e.target.value, viewTopic: '' })} placeholder="Other: e.g. the death penalty　その他：例：死刑制度" />
+        </div>
+        <div>
+          <p className="label mb-3"><${Bi} pair=${['On this, I am…', 'には']} /></p>
+          <div className="flex flex-wrap gap-2">${viewStanceOptions.map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${data.viewStance === pair[0]} onClick=${() => update({ viewStance: data.viewStance === pair[0] ? '' : pair[0] })} />`)}</div>
+        </div>
+        <div>
+          <${FieldLabel} htmlFor="viewReason" pair=${['Why? (optional)', '理由（任意）']} />
+          <textarea id="viewReason" className="input-paper mt-2 min-h-24 resize-none leading-7" value=${data.viewReason} onChange=${(e) => update({ viewReason: e.target.value })} placeholder="e.g. respect for the family's feelings　例：遺族感情への配慮" maxLength=${120}></textarea>
+          <${Counter} value=${data.viewReason.length} max=${120} note="optional" />
+        </div>
+      </div>`;
+
+    case 7: return html`
+      <div className="space-y-8">
+        <${ChoiceGroup} label=${['In what state', 'どんな状態で']} options=${endConditionOptions} value=${data.endCondition} onChange=${(v) => update({ endCondition: v })} otherId="endConditionOther" example="e.g. suddenly　例：突然" />
+        <${ChoiceGroup} label=${['With whom', '誰と']} options=${endWhoOptions} value=${data.endWho} onChange=${(v) => update({ endWho: v })} otherId="endWhoOther" example="e.g. surrounded by my dogs　例：愛犬に囲まれて" />
+        <${ChoiceGroup} label=${['Where', 'どこで']} options=${endPlaceOptions} value=${data.endPlace} onChange=${(v) => update({ endPlace: v })} otherId="endPlaceOther" example="e.g. in the town where I grew up　例：生まれ育った街で" />
+        <div>
+          <${FieldLabel} htmlFor="endOther" pair=${['Or describe it all in your own words', 'まとめて自分の言葉で書く']} />
+          <input id="endOther" className="input-paper mt-2" value=${data.endOther} onChange=${(e) => update({ endOther: e.target.value })} placeholder="e.g. peacefully, after one last trip with my grandchildren　例：孫たちとの最後の旅行のあと、穏やかに" />
+        </div>
+      </div>`;
+    default: return part === 0
+      ? html`
+      <div>
+        <${FieldLabel} htmlFor="lastWords" pair=${['Last words', '最期の言葉']} />
+        <input id="lastWords" className="input-paper mt-2" value=${data.lastWords} onChange=${(e) => update({ lastWords: e.target.value })} placeholder="e.g. Thank you for loving me　例：愛してくれてありがとう" maxLength=${80} />
+      </div>`
+      : html`
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
+        <div>
+          <${FieldLabel} htmlFor="legacyTo" pair=${['To whom', '誰に']} />
+          <input id="legacyTo" className="input-paper mt-1" value=${data.legacyTo} onChange=${(e) => update({ legacyTo: e.target.value })} placeholder="e.g. my sister　例：妹" maxLength=${40} />
+        </div>
+        <span className="hidden pb-3 text-sub sm:block" aria-hidden="true">→</span>
+        <div>
+          <${FieldLabel} htmlFor="legacyWhat" pair=${['What', '何を']} />
+          <input id="legacyWhat" className="input-paper mt-1" value=${data.legacyWhat} onChange=${(e) => update({ legacyWhat: e.target.value })} placeholder="e.g. my guitar　例：ギター" maxLength=${60} />
+        </div>
+      </div>`;
+  }
+}
+
+function Play({ data, setData, onComplete }) {
+  const [step, setStep] = useState(0);
+  const [error, setError] = useState(null);
+  const update = (patch) => setData({ ...data, ...patch });
+  const canNext = useMemo(() => {
+    if (step === 0) return Boolean(data.name.trim());
+    if (step === 1) return /^\d{4}$/.test(data.birthYear) && Number(data.birthYear) >= 1 && Number(data.birthYear) <= 2200;
+    if (step === 3) return Boolean(data.birthplace.trim()) && (data.titles.length > 0 || Boolean(data.titleOther.trim()));
+    if (step === 4) return (data.matters || []).length > 0 || Boolean(data.mattered.trim());
+    if (step === 6) return Boolean((data.viewTopic || (data.viewTopicOther || '').trim()) && data.viewStance);
+    if (step === 7) return Boolean(data.endWho.trim() && data.endCondition.trim() && data.endPlace.trim()) || Boolean(data.endOther.trim());
+    return true;
+  }, [data, step]);
+  const next = () => {
+    if (!canNext) {
+      setError(step === 1 ? ['Please enter a four-digit year.', '4桁の生まれ年を入力してください。'] : ['Please answer before moving on.', '答えを入れてから進んでください。']);
+      return;
+    }
+    setError(null);
+    if (step === 8) onComplete();
+    else setStep(step + 1);
+  };
+  const back = () => { setError(null); if (step > 0) setStep(step - 1); };
+  // each question starts at the top, so its title is the first thing on screen
+  useEffect(() => { window.scrollTo(0, 0); }, [step]);
+  const q = questions[step];
+
+  return html`
+    <${PageShell}>
+      <main className="mx-auto min-h-[calc(100dvh-8rem)] max-w-5xl px-5 pb-16 pt-8 md:px-8 md:pt-12">
+        <div className="flex items-center gap-3">
+          <img src=${avatarUrl(data.avatar, true, 'header')} alt="" className="h-11 w-11 shrink-0 rounded-md border border-rule md:hidden" />
+          <div className="flex-1"><${Progress} step=${step} /></div>
+        </div>
+        <div className="md:grid md:grid-cols-[minmax(0,1fr)_12rem] md:gap-14">
+        <div className="question-enter mt-12 min-w-0 max-w-2xl" key=${step}>
+          ${(q.parts || [q]).map((part, i) => html`
+            <section key=${i} className=${i ? 'mt-16 border-t border-rule pt-12' : ''}>
+              <p className="label text-mint-ink">${part.kicker[0]} <span lang="ja" className="ml-1 font-normal">${part.kicker[1]}</span></p>
+              ${i === 0
+                ? html`<h1 className="display mt-3 text-3xl leading-tight text-ink md:text-5xl"><${Bi} pair=${part.title} jaClass="ja-lg mt-2" /></h1>`
+                : html`<h2 className="display mt-3 text-3xl leading-tight text-ink md:text-5xl"><${Bi} pair=${part.title} jaClass="ja-lg mt-2" /></h2>`}
+              <p className="mt-4 text-base leading-7 text-body"><${Bi} pair=${part.hint} jaClass="mt-1" /></p>
+              <div className="mt-9"><${QuestionBody} step=${step} part=${i} data=${data} update=${update} /></div>
+            </section>`)}
+          ${error && html`<p className="mt-6 border-l-4 border-coral bg-[#fbf3f1] px-4 py-3 text-base font-bold text-coral-ink" role="alert"><${Bi} pair=${error} jaClass="mt-1 !text-coral-ink" /></p>`}
+          <div className="mt-12 flex items-center justify-between gap-3 border-t border-rule pt-5">
+            <button type="button" className=${`btn-quiet ${step === 0 ? 'invisible' : ''}`} onClick=${back}><${ArrowLeft} size=${18} /> Back</button>
+            <button type="button" className="btn" onClick=${next}>${step === 8 ? 'Finish the article' : 'Next'} <${ArrowRight} size=${18} /></button>
+          </div>
+        </div>
+        <aside className="hidden md:block" aria-label="Your portrait">
+          <div className="sticky top-8 mt-12 rounded-lg border border-rule bg-white p-3 text-center">
+            <img src=${avatarUrl(data.avatar, true, 'side')} alt="Your portrait" className="w-full rounded-md" />
+            <p className="mt-3 break-words font-serif text-lg font-semibold leading-snug text-ink">${data.name || '—'}</p>
+          </div>
+        </aside>
+        </div>
+      </main>
+    <//>`;
+}
+
+// The card exactly as it is saved, with the moving portrait laid over the still one.
+function LiveCard({ data, version = 0, spot, onReady, onOpen }) {
+  const [url, setUrl] = useState(null);
+  const key = JSON.stringify(data) + '|' + version;
+  useEffect(() => {
+    let live = true;
+    renderCardPng(data).then((u) => { if (live) { setUrl(u); onReady && onReady(u); } }).catch(() => {});
+    return () => { live = false; };
+  }, [key]);
+  const name = entryOf(data).name;
+  const pct = (v, of) => `${(v / of) * 100}%`;
+  const spotRect = (url && CARD_LAYOUTS.get(url)) || CARD_PORTRAIT;
+  return html`
+    <button type="button" className="relative block w-full overflow-hidden rounded-2xl shadow-[0_24px_50px_-24px_rgba(38,39,65,.45)]" onClick=${() => url && onOpen && onOpen(url)} aria-label=${`Card for ${name}`}>
+      ${url
+        ? html`<img src=${url} alt=${`Card for ${name}`} className="block w-full" />`
+        : html`<div className="aspect-[9/16] w-full animate-pulse bg-mint-soft"></div>`}
+      ${url && html`<img src=${avatarUrl(data.avatar, true, spot)} alt="" aria-hidden="true" className="pointer-events-none absolute"
+        style=${{ left: pct(spotRect.x, 1080), top: pct(spotRect.y, 1920), width: pct(spotRect.size, 1080), borderRadius: pct(spotRect.radius, spotRect.size) }} />`}
+    </button>`;
+}
+
+function Section({ heading, en, ja, quiet }) {
+  return html`
+    <section>
+      <h2 className="section-head"><${Bi} pair=${heading} /></h2>
+      <p className=${`mt-4 ${quiet ? 'text-base leading-8 text-sub' : 'text-lg leading-[1.8] text-body md:text-xl'}`}>${en}</p>
+      ${ja && html`<p className="ja ja-lg mt-2" lang="ja">${ja}</p>`}
+    </section>`;
+}
+
+function Result({ data, onEdit }) {
+  const [toast, setToast] = useState('');
+  const [cardUrl, setCardUrl] = useState(null);
+  const [zoom, setZoom] = useState(null);
+  const [trVersion, setTrVersion] = useState(0);
+  // 'idle' | 'working' | 'done' | 'partial' | 'skipped' | 'upstream_error' (nothing could be translated).
+  // While working, a waiting screen shows instead of the card; after a while it offers to go on without translating.
+  const [trStatus, setTrStatus] = useState(() => (freeTextItems(data).some((i) => !TR_CACHE.has(i.text)) ? 'working' : 'idle'));
+  const [attempt, setAttempt] = useState(0);
+  const dataKey = JSON.stringify(data);
+  useEffect(() => {
+    const items = freeTextItems(data);
+    if (!items.some((i) => !TR_CACHE.has(i.text))) { setTrStatus('idle'); return undefined; }
+    let live = true;
+    setTrStatus('working');
+    setSlow(false);
+    const slowTimer = window.setTimeout(() => { if (live) setSlow(true); }, 25000);
+    translateFreeText(items)
+      .catch(() => 'upstream_error')
+      .then((result) => { if (live) { window.clearTimeout(slowTimer); setTrStatus((cur) => (cur === 'skipped' ? 'skipped' : result)); setTrVersion((v) => v + 1); } });
+    return () => { live = false; window.clearTimeout(slowTimer); };
+  }, [dataKey, attempt]);
+  const [slow, setSlow] = useState(false);
+  const trProblem = !['idle', 'working', 'done'].includes(trStatus);
+  const entry = entryOf(data);
+  const notify = (message) => { setToast(message); window.setTimeout(() => setToast(''), 3000); };
+  // Shares the card image (the phone's share sheet, or a download on a computer); if neither works, the card opens
+  // full size to be saved by pressing and holding.
+  const shareCard = async () => {
+    if (!cardUrl) return;
+    const ok = await savePng(cardUrl, `yourwiki-${entry.name || 'card'}.png`);
+    if (!ok) setZoom(cardUrl);
+  };
+  const [quiz, setQuiz] = useState({ state: 'idle' }); // idle | making | ready (link) | error (message)
+  const makeQuiz = async () => {
+    setQuiz({ state: 'making' });
+    try {
+      const link = await saveQuiz(data);
+      setQuiz({ state: 'ready', link, qr: await renderQrPng(link, entry.name, data.avatar) });
+    }
+    catch (message) { setQuiz({ state: 'error', message: Array.isArray(message) ? message : ['The quiz could not be made.', 'クイズを作れませんでした。'] }); }
+  };
+  const copyQuizLink = async () => {
+    try { await navigator.clipboard.writeText(quiz.link); notify('Copied the quiz link.'); }
+    catch { notify('Could not copy the link.'); }
+  };
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(entry.share);
+      notify('Copied the article text.');
+    } catch {
+      notify('Could not copy the text.');
+    }
+  };
+
+  return html`
+    <${PageShell}>
+      <main className="mx-auto max-w-xl px-5 pb-20 pt-8 md:pt-10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          ${trStatus === 'working'
+            ? html`<span></span>`
+            : html`<p className="label text-mint-ink">Your article is ready <span lang="ja" className="ml-1 font-normal">記事ができあがりました</span></p>`}
+          <button type="button" className="btn-quiet" onClick=${onEdit}><${Pencil} size=${16} /> Edit</button>
+        </div>
+
+        ${trProblem && html`<p className="mt-4 text-sm leading-6 text-faint" role="status"><${Bi} pair=${
+          trStatus === 'partial' ? ['Some of your own words could not be translated.', '自分で書いた言葉の一部を翻訳できませんでした。']
+          : trStatus === 'upstream_error' ? ['Your own words could not be translated (no connection, or today\'s translation limit is used up).', '自分で書いた言葉を翻訳できませんでした（接続できないか、今日の翻訳の上限に達しています）。']
+          : trStatus === 'skipped' ? ['Your own words appear as you wrote them.', '自分で書いた言葉は、書いたままで載っています。']
+          : ['Your own words could not be translated this time.', '自分で書いた言葉を翻訳できませんでした。']} /> <button type="button" className="ml-1 font-bold text-mint-ink underline" onClick=${() => setAttempt((n) => n + 1)}>Try again もう一度</button></p>`}
+
+        ${trStatus === 'working'
+          ? html`<div className="mx-auto mt-6 flex aspect-[9/16] max-w-[26rem] flex-col items-center justify-center rounded-2xl border border-rule bg-white px-8 text-center" role="status">
+              <img src=${avatarUrl(data.avatar, true, 'waiting')} alt="" className="w-32 rounded-xl" />
+              <p className="mt-6 text-lg font-bold text-ink">Writing your article<span className="wait-dots"></span></p>
+              <p lang="ja" className="mt-1 text-base text-sub">記事を書いています</p>
+              <p className="mt-4 text-sm leading-6 text-faint"><${Bi} pair=${['Translating the words you wrote yourself into both languages.', '自分で書いた言葉を、英語と日本語に訳しています。']} /></p>
+              ${slow && html`<button type="button" className="btn-quiet mt-6" onClick=${() => { setTrStatus('skipped'); setTrVersion((v) => v + 1); }}>Show it without translating <span lang="ja" className="ml-1 text-xs">翻訳せずに表示</span></button>`}
+            </div>`
+          : html`<div className="mx-auto mt-6 max-w-[26rem]">
+              <${LiveCard} data=${data} version=${trVersion} spot="result-card" onReady=${setCardUrl} onOpen=${setZoom} />
+            </div>`}
+        <p className="mt-3 text-center text-sm text-faint"><${Bi} pair=${['Tap the card to see it full size.', 'カードをタップすると大きく表示されます。']} /></p>
+
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          <button type="button" className="btn w-full !px-3" onClick=${shareCard} disabled=${!cardUrl || trStatus === 'working'}><${Share2} size=${18} className="shrink-0" /> <span className="flex flex-col items-center leading-tight"><span className="text-[15px]">Share image</span><span lang="ja" className="mt-1 text-[11px] font-normal">画像を共有する</span></span></button>
+          <button type="button" className="btn w-full !bg-[#f4c27a] !px-3 !text-ink" onClick=${makeQuiz} disabled=${quiz.state === 'making' || trStatus === 'working'}><span className="flex flex-col items-center leading-tight"><span className="text-[15px]">${quiz.state === 'making' ? 'Making the quiz…' : 'Make a quiz'}</span><span lang="ja" className="mt-1 text-[11px] font-normal">クイズを作る</span></span></button>
+        </div>
+        <div className="text-center">
+          ${quiz.state === 'ready' && html`<div className="mx-auto mt-4 max-w-md rounded-xl border border-mint-ink bg-mint-soft p-4 text-left">
+            <p className="text-sm font-bold text-ink"><${Bi} pair=${['Your quiz is ready. Save the QR code and send it:', 'クイズができました。QRコードを保存して送ってください：']} /></p>
+            <img src=${quiz.qr} alt="QR code for your quiz" className="mt-3 w-full rounded-lg" />
+            <button type="button" className="btn mt-3 w-full" onClick=${() => savePng(quiz.qr, `yourwiki-quiz-${entry.name}.png`).then((ok) => { if (!ok) setZoom(quiz.qr); })}><${Download} size=${16} /> Save QR code <span lang="ja" className="ml-1 text-sm font-normal">QRコードを保存</span></button>
+          </div>`}
+          ${quiz.state === 'error' && html`<p className="mx-auto mt-3 max-w-md text-sm leading-6 text-coral-ink" role="status"><${Bi} pair=${quiz.message} /></p>`}
+        </div>
+        <p className="mx-auto mt-3 max-w-md text-center text-sm leading-7 text-sub"><${Bi} pair=${['Share your card, or turn it into a quiz, and start a conversation with someone you care about.', 'カードを共有するか、クイズ形式で大切な人と話すきっかけを作りましょう。']} /></p>
+        <p className="mt-14 text-center text-sm leading-7 text-faint"><${Bi} pair=${NOTE} /></p>
+
+        ${zoom && html`
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/80 p-5" role="dialog" aria-label="Card image" onClick=${() => setZoom(null)}>
+            <div className="flex max-h-full w-full max-w-md flex-col items-center gap-4" onClick=${(e) => e.stopPropagation()}>
+              <img src=${zoom} alt=${`Card for ${entry.name}`} className="max-h-[78dvh] w-auto max-w-full rounded-xl shadow-xl" />
+              <p className="text-center text-base font-bold text-white"><${Bi} pair=${['Press and hold the image, or right-click it, to save.', '画像を長押し、または右クリックして保存してください。']} jaClass="!text-[#e6e6ee]" /></p>
+              <button type="button" className="btn-outline" onClick=${() => setZoom(null)}><${X} size=${18} /> Close</button>
+            </div>
+          </div>`}
+        ${toast && html`<div className="fixed bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded border border-ink bg-white px-5 py-3 text-sm font-bold text-ink shadow-lg" role="status"><${Check} size=${16} className="text-mint-ink" />${toast}</div>`}
+      </main>
+    <//>`;
+}
+
+/* ---------- quiz: friends guess your answers ---------- */
+// The whole quiz (questions, the article and its translations) is packed into the link itself, after #quiz=,
+// compressed where the browser can. Nothing is stored anywhere, so no server or account is needed.
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64url = (t) => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((t.length + 3) % 4)), (c) => c.charCodeAt(0));
+async function squeeze(bytes, mode) {
+  const stream = new Blob([bytes]).stream().pipeThrough(mode === 'in' ? new CompressionStream('deflate-raw') : new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+async function packQuiz(quiz) {
+  const raw = new TextEncoder().encode(JSON.stringify(quiz));
+  if (typeof CompressionStream === 'function') { try { return 'z' + b64url(await squeeze(raw, 'in')); } catch { /* fall through */ } }
+  return 'j' + b64url(raw);
+}
+async function unpackQuiz(code) {
+  const bytes = unb64url(code.slice(1));
+  return JSON.parse(new TextDecoder().decode(code[0] === 'z' ? await squeeze(bytes, 'out') : bytes));
+}
+const quizIdFromHash = () => { const m = /^#quiz=([zj][A-Za-z0-9_-]+)$/.exec(window.location.hash); return m ? m[1] : null; };
+
+function shuffled(list, rand = Math.random) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i -= 1) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+// Builds the questions from the finished article, in a fixed order:
+// birthplace, what mattered, belief, state at the end, with whom, where, last words (or occupation if none).
+// Each: { topic: [en, ja], q: [en, ja], options: [[en, ja], …], answer: index }.
+function buildQuiz(data) {
+  const e = entryOf(data);
+  const nm = [e.name, e.nameJa];
+  const questions = [];
+  const ask = (topic, q, correct, pool) => {
+    const others = shuffled(pool.filter(([en, ja]) => en !== correct[0] && ja !== correct[1])).slice(0, 3);
+    if (!others.length) return;
+    const options = shuffled([correct, ...others]);
+    questions.push({ topic, q, options, answer: options.indexOf(correct) });
+  };
+  const pairs = (list, en = (x) => x[0]) => list.map((x) => [en(x), x[1]]);
+  const typed = (v) => [trEn(v.trim()), trJa(v.trim())];
+
+  ask(['Birthplace', '生まれ'], [`Where was ${nm[0]} born?`, `${nm[1]}はどこで生まれた？`], [e.birthplace, e.birthplaceJa],
+    [...pairs(placeShortcuts), ['Tokyo', '東京'], ['Osaka', '大阪'], ['Hokkaido', '北海道']]);
+  const firstMatter = (data.matters || [])[0];
+  const matterPair = firstMatter ? [articleEnOf(firstMatter), jaOf(firstMatter)] : data.mattered.trim() ? typed(data.mattered) : null;
+  if (matterPair) ask(['What matters', '大切なこと'], [`What does ${nm[0]} hold on to in life?`, `${nm[1]}が大切にしていることは？`], matterPair, pairs(matteredOptions, (x) => x[2] || x[0]));
+  if (data.viewStance && (data.viewTopic || data.viewTopicOther)) {
+    const topic = data.viewTopic ? [articleEnOf(data.viewTopic), jaOf(data.viewTopic)] : typed(data.viewTopicOther);
+    questions.push({ topic: ['Belief', '思想'], q: [`On ${topic[0]}, where does ${nm[0]} stand?`, `${topic[1]}について、${nm[1]}の立場は？`], options: [['For it', '賛成'], ['Against it', '反対']], answer: data.viewStance === 'for' ? 0 : 1 });
+  }
+  if (data.endCondition.trim()) ask(['In what state', '状態'], [`In what state does ${nm[0]} pass away?`, `${nm[1]}はどんな状態でこの世を去る？`], typed(data.endCondition),
+    [...pairs(endConditionOptions), ['suddenly', '突然'], ['in their sleep', '眠るように']]);
+  if (data.endWho.trim()) ask(['With whom', '誰と'], [`Who is with ${nm[0]} at the end?`, `${nm[1]}は誰とこの世を去る？`], typed(data.endWho),
+    [...pairs(endWhoOptions), ['with friends', '友だちと'], ['surrounded by their dogs', '愛犬に囲まれて']]);
+  if (data.endPlace.trim()) ask(['Where', 'どこで'], [`Where does ${nm[0]} pass away?`, `${nm[1]}はどこでこの世を去る？`], typed(data.endPlace),
+    [...pairs(endPlaceOptions), ['in the town where they grew up', '生まれ育った街で']]);
+  if ((data.lastWords || '').trim()) {
+    ask(['Last words', '最期の言葉'], [`What are ${nm[0]}'s last words?`, `${nm[1]}の最期の言葉は？`], typed(data.lastWords.replace(/[.。]$/, '')),
+      [['Thank you for loving me', '愛してくれてありがとう'], ['See you later', 'またね'], ['It was a good life', 'いい人生だった'], ['Don\u2019t forget to eat well', 'ちゃんとごはん食べてね']]);
+  } else {
+    ask(['Occupation', '肩書き'], [`What did ${nm[0]} do in life?`, `${nm[1]}は何をした人？`], [e.title, e.titleJa], pairs(titleOptions));
+  }
+  // the article itself travels with the quiz, with the translations of anything typed, so takers can read it at the end
+  const translations = freeTextItems(data).filter((i) => TR_CACHE.has(i.text)).map((i) => [i.text, TR_CACHE.get(i.text).en, TR_CACHE.get(i.text).ja]);
+  return { name: e.name, nameJa: e.nameJa, avatar: data.avatar, questions, article: data, translations, createdAt: new Date().toISOString() };
+}
+
+// A square picture of the quiz link as a QR code, to save to the camera roll and send; a phone camera
+// or the Photos app opens the link straight from it.
+async function renderQrPng(link, quizName, avatar) {
+  const qr = qrcode(0, 'L');
+  qr.addData(link);
+  qr.make();
+  const n = qr.getModuleCount();
+  const S = 1080;
+  const color = Number.isInteger(avatar) ? AV_COLORS[3] : pick(AV_COLORS, (avatar || {}).color);
+  const deep = mixHex(color.fill, '#2f2e3c', 0.42), pale = mixHex(color.fill, '#ffffff', 0.82);
+  const round = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans CJK JP", sans-serif';
+  try { await document.fonts.load(`700 40px "Zen Maru Gothic"`, `${quizName}How well do you know?のこと、どれだけ知ってる？Scan to play読み取ってクイズに挑戦`); } catch { /* system faces */ }
+  const canvas = document.createElement('canvas'); canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = pale; ctx.fillRect(0, 0, S, S);
+  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(60, 60, S - 120, S - 120, 36); ctx.fill();
+  const portrait = new Image(); portrait.src = avatarUrl(avatar); await portrait.decode();
+  ctx.save(); ctx.beginPath(); ctx.roundRect(110, 100, 150, 150, 18); ctx.clip(); ctx.drawImage(portrait, 110, 100, 150, 150); ctx.restore();
+  ctx.fillStyle = '#2f2e3c'; ctx.textAlign = 'left';
+  let size = 44; ctx.font = `700 ${size}px ${round}`;
+  const title = `How well do you know ${quizName}?`;
+  while (ctx.measureText(title).width > S - 400 && size > 26) { size -= 2; ctx.font = `700 ${size}px ${round}`; }
+  ctx.fillText(title, 290, 168);
+  ctx.fillStyle = '#6a6979'; ctx.font = `500 30px ${round}`; ctx.fillText(`${quizName}のこと、どれだけ知ってる？`, 290, 218);
+  // the code itself, with a white quiet zone around it
+  // whole-pixel cells keep the edges sharp, which cameras read more reliably
+  const cell = Math.max(2, Math.floor(600 / n)), box = cell * n, x0 = Math.round((S - box) / 2), y0 = 280 + Math.round((600 - box) / 2);
+  for (let r = 0; r < n; r += 1) for (let c = 0; c < n; c += 1) {
+    if (qr.isDark(r, c)) { ctx.fillStyle = '#16161d'; ctx.fillRect(x0 + c * cell, y0 + r * cell, cell, cell); }
+  }
+  ctx.fillStyle = deep; ctx.textAlign = 'center'; ctx.font = `700 36px ${round}`; ctx.fillText('Scan to play  読み取ってクイズに挑戦', S / 2, 280 + 600 + 72);
+  ctx.fillStyle = '#9896a4'; ctx.font = `700 28px "Shippori Mincho", serif`; ctx.fillText('yourwiki', S / 2, S - 78);
+  return canvas.toDataURL('image/png');
+}
+
+// Builds the quiz link for this page: its own address with the packed quiz after #quiz=.
+async function saveQuiz(data) {
+  try {
+    // only answers that were filled in, plus the translations of typed words; the quiz is rebuilt when opened
+    const answers = Object.fromEntries(Object.entries(data).filter(([, v]) => (Array.isArray(v) ? v.length : v !== '' && v != null)));
+    const translations = freeTextItems(data).filter((i) => TR_CACHE.has(i.text)).map((i) => [i.text, TR_CACHE.get(i.text).en, TR_CACHE.get(i.text).ja]);
+    return `${window.location.href.split('#')[0]}#quiz=${await packQuiz({ v: 2, a: answers, t: translations })}`;
+  } catch {
+    throw ['The quiz could not be made.', 'クイズを作れませんでした。'];
+  }
+}
+
+// A light-hearted line for each score (the bands are set for 7 questions and scale for fewer).
+function quizComment(score, total) {
+  if (score === total) return ['Wait, are you them?', '本人じゃん'];
+  if (score === 0) return ['You met two seconds ago.', '出会って2秒'];
+  const r = score / total;
+  if (r >= 5 / 7) return ['Certified best friend.', '親友だね'];
+  if (r >= 3 / 7) return ['Friends on the surface.', 'うわべだけの友達'];
+  return ['Just acquaintances.', '知り合い程度'];
+}
+
+// A square image of someone's quiz result, to send back to the person the quiz is about.
+async function renderQuizResultPng(quiz, picks, from) {
+  const S = 1080, CX = S / 2;
+  const color = Number.isInteger(quiz.avatar) ? AV_COLORS[3] : pick(AV_COLORS, (quiz.avatar || {}).color);
+  const base = color.fill;
+  const C = { desk: mixHex(base, '#f6f4f0', 0.86), page: '#fffefb', grid: mixHex(base, '#ffffff', 0.78), ink: '#2f2e3c', sub: '#6a6979',
+    pale: mixHex(base, '#ffffff', 0.86), light: mixHex(base, '#ffffff', 0.68), mid: mixHex(base, '#ffffff', 0.42), deep: mixHex(base, '#2f2e3c', 0.42) };
+  const round = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Noto Sans CJK JP", sans-serif';
+  const formal = '"Shippori Mincho", "Hiragino Mincho ProN", "Noto Serif CJK JP", serif';
+  const bubble = '"Cherry Bomb One", "Zen Maru Gothic", sans-serif';
+  const botan = '"Amatic SC", "Zen Maru Gothic", cursive';
+  const score = quiz.questions.reduce((n, q, i) => n + (picks[i] === q.answer ? 1 : 0), 0);
+  const total = quiz.questions.length;
+  const all = `${quiz.name}${quiz.nameJa}${from}クイズの結果正解問中 QUIZ RESULT yourwiki from ${quiz.questions.map((q) => q.topic.join('')).join('')}`;
+  try { await Promise.all([document.fonts.load(`700 40px "Zen Maru Gothic"`, all), document.fonts.load(`400 120px "Cherry Bomb One"`, `0123456789/ ${quiz.name}`), document.fonts.load(`700 40px "Amatic SC"`, 'QUIZ RESULT'), document.fonts.load(`700 40px "Shippori Mincho"`, 'yourwiki')]); } catch { /* system faces */ }
+  const canvas = document.createElement('canvas'); canvas.width = S; canvas.height = S;
+  const ctx = canvas.getContext('2d');
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); };
+  const text = (t, x, y, align = 'left') => { ctx.textAlign = align; ctx.fillText(t, x, y); ctx.textAlign = 'left'; };
+  const fit = (t, weight, size, family, maxW, min) => { let s = size; for (;;) { ctx.font = `${weight} ${s}px ${family}`; if (ctx.measureText(t).width <= maxW || s <= min) return s; s -= 2; } };
+
+  ctx.fillStyle = C.desk; ctx.fillRect(0, 0, S, S);
+  const PX0 = 56, PY0 = 56, PW = S - 112, PH = S - 112;
+  ctx.save(); ctx.shadowColor = 'rgba(47,46,60,.16)'; ctx.shadowBlur = 36; ctx.shadowOffsetY = 14; ctx.fillStyle = C.page; rr(PX0, PY0, PW, PH, 22); ctx.fill(); ctx.restore();
+  ctx.save(); rr(PX0, PY0, PW, PH, 22); ctx.clip(); ctx.strokeStyle = C.grid; ctx.lineWidth = 1.4;
+  for (let x = PX0 + 17; x < PX0 + PW; x += 34) { ctx.beginPath(); ctx.moveTo(x, PY0); ctx.lineTo(x, PY0 + PH); ctx.stroke(); }
+  for (let y = PY0 + 17; y < PY0 + PH; y += 34) { ctx.beginPath(); ctx.moveTo(PX0, y); ctx.lineTo(PX0 + PW, y); ctx.stroke(); }
+  ctx.restore();
+  // washi tape
+  [[PX0 + 60, PY0 + 4, -30, C.light], [PX0 + 70, PY0 + PH - 6, 30, C.mid]].forEach(([x, y, a, col]) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(a * Math.PI / 180); ctx.globalAlpha = 0.8; ctx.fillStyle = col; ctx.fillRect(-100, -24, 200, 48); ctx.restore();
+  });
+  const X = PX0 + 70, RIGHT = PX0 + PW - 70;
+  // header
+  ctx.fillStyle = C.deep; ctx.font = `700 48px "Dancing Script", cursive`; text('W', X, PY0 + 96);
+  ctx.fillStyle = C.ink; ctx.font = `700 36px ${formal}`; text('yourwiki', X + 60, PY0 + 92);
+  ctx.font = `700 38px ${botan}`; const pill = 'QUIZ RESULT'; const pw = ctx.measureText(pill).width + 44;
+  ctx.fillStyle = C.light; rr(RIGHT - pw, PY0 + 54, pw, 50, 25); ctx.fill(); ctx.fillStyle = C.deep; text(pill, RIGHT - pw / 2, PY0 + 90, 'center');
+  ctx.fillStyle = C.mid; ctx.fillRect(X, PY0 + 124, RIGHT - X, 2);
+
+  // portrait and title
+  const portrait = new Image(); portrait.src = avatarUrl(quiz.avatar); await portrait.decode();
+  ctx.save(); ctx.shadowColor = 'rgba(47,46,60,.16)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6; ctx.fillStyle = '#ffffff'; rr(X - 10, PY0 + 160, 220, 220, 14); ctx.fill(); ctx.restore();
+  ctx.save(); rr(X, PY0 + 170, 200, 200, 8); ctx.clip(); ctx.drawImage(portrait, X, PY0 + 170, 200, 200); ctx.restore();
+  const TX = X + 250, TW = RIGHT - TX;
+  ctx.fillStyle = C.sub; ctx.font = `500 30px ${round}`; text('How well do you know', TX, PY0 + 210);
+  const ns = fit(quiz.name, 400, 76, bubble, TW, 40);
+  ctx.fillStyle = mixHex(base, '#2f2e3c', color.dark ? 0.05 : 0.3); text(`${quiz.name}?`, TX, PY0 + 210 + ns * 1.05);
+  ctx.fillStyle = C.sub; ctx.font = `500 30px ${round}`; text(`${quiz.nameJa}クイズの結果`, TX, PY0 + 210 + ns * 1.05 + 52);
+  // score, with a one-line comment under it
+  const SY = PY0 + 492;
+  ctx.fillStyle = C.pale; rr(X, SY - 92, RIGHT - X, 128, 64); ctx.fill();
+  ctx.fillStyle = C.deep; ctx.font = `400 104px ${bubble}`; text(`${score} / ${total}`, CX - 40, SY + 10, 'center');
+  ctx.font = `700 34px ${round}`; text(score === total ? '全問正解！' : `${total}問中${score}問正解`, CX + 200, SY - 4, 'center');
+  const [commentEn, commentJa] = quizComment(score, total);
+  ctx.fillStyle = C.ink; ctx.font = `700 30px ${round}`; text(commentJa, CX, SY + 86, 'center');
+  ctx.fillStyle = C.sub; ctx.font = `500 22px ${round}`; text(commentEn, CX, SY + 120, 'center');
+
+  // each question: ✓ or ✗ with its topic, in two columns
+  const rowsTop = SY + 152, colW = (RIGHT - X - 30) / 2;
+  quiz.questions.forEach((q, i) => {
+    const col = i < 4 ? 0 : 1, row = i < 4 ? i : i - 4;
+    const x = X + col * (colW + 30), y = rowsTop + row * 70;
+    const ok = picks[i] === q.answer;
+    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = C.mid; ctx.lineWidth = 2; rr(x, y, colW, 56, 28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = ok ? '#2f7d6a' : '#d2473f'; ctx.beginPath(); ctx.arc(x + 30, y + 28, 18, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.beginPath();
+    if (ok) { ctx.moveTo(x + 21, y + 28); ctx.lineTo(x + 28, y + 35); ctx.lineTo(x + 40, y + 21); } else { ctx.moveTo(x + 23, y + 21); ctx.lineTo(x + 37, y + 35); ctx.moveTo(x + 37, y + 21); ctx.lineTo(x + 23, y + 35); }
+    ctx.stroke();
+    ctx.fillStyle = C.ink; ctx.font = `700 26px ${round}`; text(`Q${i + 1}  ${q.topic[1]}`, x + 62, y + 37);
+    const jaW = ctx.measureText(`Q${i + 1}  ${q.topic[1]}`).width;
+    ctx.fillStyle = C.sub; ctx.font = `500 20px ${round}`;
+    if (62 + jaW + 16 + ctx.measureText(q.topic[0]).width <= colW - 22) text(q.topic[0], x + colW - 22, y + 36, 'right');
+  });
+
+  // who answered, bottom right
+  if (from) {
+    const fy = PY0 + PH - 34;
+    ctx.font = `700 26px ${round}`; const label = `Answered by ${from}`; const lw = ctx.measureText(label).width + 36;
+    ctx.font = `500 22px ${round}`; const ja = `${from}さんの回答`; const jw = ctx.measureText(ja).width;
+    ctx.fillStyle = C.sub; text(ja, RIGHT, fy - 2, 'right');
+    ctx.fillStyle = C.light; rr(RIGHT - jw - 14 - lw, fy - 32, lw, 44, 22); ctx.fill();
+    ctx.fillStyle = C.deep; ctx.font = `700 26px ${round}`; text(label, RIGHT - jw - 14 - lw + 18, fy);
+  }
+  return canvas.toDataURL('image/png');
+}
+
+// Hands a PNG data URL to the viewer: the share sheet on phones (LINE, AirDrop, Messages…), a download elsewhere.
+// Resolves false only when neither worked, so the caller can show the image to press and hold.
+async function savePng(dataUrl, filename) {
+  const name = filename.replace(/[\\/:*?"<>|]+/g, '').trim() || 'yourwiki.png';
+  const bin = atob(dataUrl.split(',')[1]);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  const file = new File([bytes], name, { type: 'image/png' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'yourwiki' }); return true; }
+    catch (err) { if (err?.name === 'AbortError') return true; }
+  }
+  try {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    return !/iPhone|iPad|iPod/.test(navigator.userAgent); // iOS without sharing: show the image instead
+  } catch { return false; }
+}
+
+function QuizPage({ quizId }) {
+  const go = useContext(NavContext);
+  const [quiz, setQuiz] = useState(undefined); // undefined: loading, null: not found
+  const [picks, setPicks] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [from, setFrom] = useState('');
+  const [image, setImage] = useState(null); // the result card, shown on the result screen and saved as is
+  const [zoom, setZoom] = useState(false);
+  const [articleOpen, setArticleOpen] = useState(false);
+  useEffect(() => {
+    let live = true;
+    const timer = window.setTimeout(() => { if (live) setQuiz(null); }, 10000);
+    (async () => {
+      try {
+        let body = await unpackQuiz(quizId);
+        if (body && body.v === 2) {
+          (body.t || []).forEach(([text, en, ja]) => { if (text && en && ja && !TR_CACHE.has(text)) TR_CACHE.set(text, { en, ja }); });
+          body = buildQuiz({ ...defaultWiki, ...body.a });
+        }
+        if (body && Array.isArray(body.translations)) body.translations.forEach(([text, en, ja]) => { if (text && en && ja && !TR_CACHE.has(text)) TR_CACHE.set(text, { en, ja }); });
+        if (live) setQuiz(body && Array.isArray(body.questions) && body.questions.length ? body : null);
+      } catch { if (live) setQuiz(null); }
+      window.clearTimeout(timer);
+    })();
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [quizId]);
+  const leave = () => { window.location.hash = ''; go('landing'); };
+
+  if (quiz === undefined) return html`<${PageShell}><main className="mx-auto max-w-xl px-5 py-20 text-center text-sub" role="status"><${Bi} pair=${['Loading the quiz…', 'クイズを読み込んでいます…']} /></main><//>`;
+  if (quiz === null) return html`<${PageShell}><main className="mx-auto max-w-xl px-5 py-20 text-center">
+    <p className="text-lg font-bold text-ink"><${Bi} pair=${['This quiz could not be found.', 'クイズが見つかりませんでした。']} /></p>
+    <button type="button" className="btn mt-8" onClick=${leave}>Make your own article <span lang="ja" className="ml-1 text-sm font-normal">自分の記事を作る</span></button>
+  </main><//>`;
+
+  const total = quiz.questions.length;
+  // screens: the questions (0 … total-1), then the taker's name (total), then the result (total + 1)
+  const askingName = index === total;
+  const done = index > total;
+  const q = quiz.questions[Math.min(index, total - 1)];
+  const picked = picks[index] ?? null;
+  const score = quiz.questions.reduce((n, qq, i) => n + (picks[i] === qq.answer ? 1 : 0), 0);
+  const choose = (i) => { if (picked !== null) return; const next = [...picks]; next[index] = i; setPicks(next); };
+  const showResult = async () => {
+    setIndex(total + 1);
+    setImage(null);
+    try { setImage(await renderQuizResultPng(quiz, picks, from.trim())); } catch { setImage(''); }
+  };
+  const sendBack = async () => {
+    if (!image) return;
+    const saved = await savePng(image, `yourwiki-quiz-${quiz.name}.png`);
+    if (!saved) setZoom(true);
+  };
+
+  return html`
+    <${PageShell}>
+      <main className="mx-auto max-w-xl px-5 pb-20 pt-8 md:pt-10">
+        <div className="flex items-center gap-4">
+          <img src=${avatarUrl(quiz.avatar, true, 'quiz')} alt="" className="h-20 w-20 rounded-xl border border-rule" />
+          <div>
+            <p className="label text-mint-ink">Quiz <span lang="ja" className="ml-1 font-normal">クイズ</span></p>
+            <h1 className="display mt-1 text-2xl leading-tight text-ink"><${Bi} pair=${[`How well do you know ${quiz.name}?`, `${quiz.nameJa}のこと、どれだけ知ってる？`]} jaClass="ja-lg mt-1" /></h1>
+          </div>
+        </div>
+        ${done
+          ? html`<div className="mt-8 text-center">
+              ${image
+                ? html`<img src=${image} alt=${`Quiz result: ${score} of ${total}`} className="w-full rounded-2xl shadow-[0_24px_50px_-24px_rgba(38,39,65,.45)]" />`
+                : html`<div className="aspect-square w-full animate-pulse rounded-2xl bg-mint-soft" role="status" aria-label="Making the result"></div>`}
+              <p className="mt-5 text-sm leading-6 text-sub"><${Bi} pair=${['Why not talk about the answers together?', '答えについて、一緒に話してみませんか？']} /></p>
+              ${quiz.article && html`<button type="button" className="btn-outline mt-5 w-full" onClick=${() => setArticleOpen(true)}><span className="flex flex-col items-center leading-tight"><span>Read the original article</span><span lang="ja" className="mt-1 text-sm font-normal">もとの記事を読む</span></span></button>`}
+              <button type="button" className="btn mt-3 w-full" onClick=${sendBack} disabled=${!image}><${Share2} size=${18} /> <span className="flex flex-col items-center leading-tight"><span>Send your result back</span><span lang="ja" className="mt-1 text-sm font-normal">結果を画像にして本人に送る</span></span></button>
+              <button type="button" className="btn-quiet mt-4" onClick=${leave}>Make your own article <span lang="ja" className="ml-1 text-sm font-normal">自分の記事を作る</span></button>
+            </div>`
+          : askingName
+          ? html`<div className="mt-10">
+              <p className="num text-sm text-faint">Q${total + 1} / ${total + 1}</p>
+              <h2 className="mt-2 text-xl font-bold leading-snug text-ink"><${Bi} pair=${['Last one: what is your name?', '最後に、あなたの名前は？']} jaClass="mt-1 text-base font-normal" /></h2>
+              <p className="mt-2 text-sm leading-6 text-sub"><${Bi} pair=${['It goes on your result card. It can be made up.', '結果カードに載ります。架空でもかまいません。']} /></p>
+              <input id="quizFrom" className="input-paper mt-5" value=${from} onChange=${(e) => setFrom(e.target.value)} maxLength=${20} placeholder="e.g. Ken　例：けん" />
+              <div className="mt-4 flex flex-wrap gap-2">${[['Sakamoto Ryoma', '坂本龍馬'], ['Cleopatra', 'クレオパトラ']].map((pair) => html`<${Chip} key=${pair[0]} pair=${pair} selected=${from === pair[0]} onClick=${() => setFrom(from === pair[0] ? '' : pair[0])} />`)}</div>
+              <div className="mt-6 text-right"><button type="button" className="btn" onClick=${showResult}>See your result <span lang="ja" className="ml-1 text-sm font-normal">結果を見る</span> <${ArrowRight} size=${18} /></button></div>
+            </div>`
+          : html`<div className="mt-10" key=${index}>
+              <p className="num text-sm text-faint">Q${index + 1} / ${total}</p>
+              <h2 className="mt-2 text-xl font-bold leading-snug text-ink"><${Bi} pair=${q.q} jaClass="mt-1 text-base font-normal" /></h2>
+              <div className="mt-6 grid gap-3">
+                ${q.options.map((o, i) => {
+                  const right = picked !== null && i === q.answer;
+                  const wrong = picked !== null && i === picked && i !== q.answer;
+                  const state = right ? 'border-2 border-mint-ink bg-mint-soft' : wrong ? 'border-2 border-[#d2473f] bg-[#fbeceb]' : `border border-rule bg-white ${picked !== null ? 'opacity-60' : ''}`;
+                  return html`<button key=${i} type="button" className=${`rounded-xl px-5 py-4 text-left text-base text-ink ${state}`} onClick=${() => choose(i)} disabled=${picked !== null}>
+                    ${o[0]}<span lang="ja" className="ja mt-0.5 block text-sm text-sub">${o[1]}</span>
+                    ${right ? html`<span className="mt-1 block text-sm font-bold text-mint-ink">✓ Correct 正解</span>` : ''}
+                    ${wrong ? html`<span className="mt-1 block text-sm font-bold text-[#d2473f]">✗ Your answer あなたの答え</span>` : ''}
+                  </button>`;
+                })}
+              </div>
+              ${picked !== null && html`<div className="mt-6 text-right"><button type="button" className="btn" onClick=${() => setIndex((n) => n + 1)}>Next <${ArrowRight} size=${18} /></button></div>`}
+            </div>`}
+        ${articleOpen && quiz.article && html`
+          <div className="fixed inset-0 z-40 overflow-y-auto bg-ink/80 p-5" role="dialog" aria-label="The original article" onClick=${() => setArticleOpen(false)}>
+            <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4 py-4" onClick=${(e) => e.stopPropagation()}>
+              <${LiveCard} data=${quiz.article} spot="quiz-article" />
+              <button type="button" className="btn-outline" onClick=${() => setArticleOpen(false)}><${X} size=${18} /> Close</button>
+            </div>
+          </div>`}
+        ${zoom && image && html`
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/80 p-5" role="dialog" aria-label="Result image" onClick=${() => setZoom(false)}>
+            <div className="flex w-full max-w-md flex-col items-center gap-4" onClick=${(e) => e.stopPropagation()}>
+              <img src=${image} alt="Quiz result" className="w-full rounded-xl shadow-xl" />
+              <p className="text-center text-base font-bold text-white"><${Bi} pair=${['Press and hold the image, or right-click it, to save.', '画像を長押し、または右クリックして保存してください。']} jaClass="!text-[#e6e6ee]" /></p>
+              <button type="button" className="btn-outline" onClick=${() => setZoom(false)}><${X} size=${18} /> Close</button>
+            </div>
+          </div>`}
+      </main>
+    <//>`;
+}
+
+/* ---------- app ---------- */
+
+function App() {
+  // A #quiz-… link opens straight onto that quiz.
+  const [quizId, setQuizId] = useState(quizIdFromHash);
+  const [page, setPage] = useState(() => (quizIdFromHash() ? 'quiz' : 'landing'));
+  useEffect(() => {
+    const onHash = () => { const id = quizIdFromHash(); if (id) { setQuizId(id); setPage('quiz'); } };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  const [data, setData] = useState(defaultWiki);
+  const go = (to) => { setPage(to); window.scrollTo(0, 0); };
+  let view;
+  if (page === 'quiz' && quizId) view = html`<${QuizPage} quizId=${quizId} />`;
+  else if (page === 'about') view = html`<${About} />`;
+  else if (page === 'play') view = html`<${Play} data=${data} setData=${setData} onComplete=${() => go('result')} />`;
+  else if (page === 'result') view = html`<${Result} data=${data} onEdit=${() => go('play')} />`;
+  else view = html`<${Landing} />`;
+  return html`<${NavContext.Provider} value=${go}>${view}<//>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
+</script>
+
+</body></html>
